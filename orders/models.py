@@ -19,26 +19,41 @@ order_type = (
 )
 
 status_choices = (
+    ('new', 'New'),
     ('processing', 'Processing'),
-    ('delivering', 'Delivering'),
     ('completed', 'Completed'),
+)
+
+status_pay_choices = (
+    ('paid', 'Paid'),
+    ('unpaid', 'Unpaid'),
+)
+
+delivery_choices = (
+    ('waiting', 'Waiting'),
+    ('on_road', 'On road'),
+    ('delivered', 'Delivered'),
 )
 
 
 class Order(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='orders', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     pay_type = models.CharField(max_length=50, choices=pay_type, default='cash')
     order_type = models.CharField(max_length=50, choices=order_type, default='there')
     position = models.IntegerField(default=1)
-    full_price = models.PositiveBigIntegerField()
-    status = models.CharField(max_length=50, choices=status_choices, default='processing')
+    full_price = models.PositiveBigIntegerField(default=0)
+    status = models.CharField(max_length=50, choices=status_choices, default='new')
+    status_pay = models.CharField(max_length=50, choices=status_pay_choices, default='unpaid')
+    delivery_status = models.CharField(max_length=50, choices=delivery_choices, default='waiting', null=True,
+                                       blank=True)
     delivery_address = models.CharField(max_length=255, blank=True, null=True)
+    webhook_url = models.URLField(blank=True, null=True)
 
     def calculate_order_price(self):
         total_price = 0
         for item in self.items.all():
-            total_price += item.price * item.quantity
+            total_price += item.price
         return total_price
 
 
@@ -47,11 +62,3 @@ class OrderItem(models.Model):
     food = models.ForeignKey(Food, on_delete=models.CASCADE, related_name='items')
     quantity = models.IntegerField(default=1)
     price = models.PositiveBigIntegerField()
-
-
-@receiver(post_save, sender=OrderItem)
-def update_order_on_order_item_save(sender, instance, created, **kwargs):
-    if created:
-        instance.order.position = instance.order.items.count()
-        instance.order.full_price = instance.order.calculate_order_price()
-        instance.order.save()

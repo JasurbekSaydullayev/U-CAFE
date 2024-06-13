@@ -19,14 +19,14 @@ category_choice = (
 
 
 class Food(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     price = models.IntegerField()
     count = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
     category = models.CharField(max_length=100, choices=category_choice, default='breakfast')
-    day = models.CharField(max_length=100, choices=day_choice, default='Monday')
+    day = models.CharField(max_length=100, choices=day_choice, null=True, blank=True)
 
     def __str__(self):
         return self.name
