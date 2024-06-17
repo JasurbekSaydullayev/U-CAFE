@@ -3,7 +3,7 @@ from django.contrib.auth.hashers import make_password
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
-from users.api.v1.serializers import UserSerializer, UserDetailSerializer
+from users.api.v1.serializers import UserDashboardSerializer, UserDetailSerializer
 from users.models import User
 
 
@@ -13,7 +13,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ['create', 'list', 'delete', 'update']:
-            return UserSerializer
+            return UserDashboardSerializer
         elif self.action in ['retrieve', 'partial_update']:
             return UserDetailSerializer
 

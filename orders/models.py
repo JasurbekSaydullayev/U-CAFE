@@ -5,6 +5,8 @@ from django.dispatch import receiver
 from foods.models import Food
 from users.models import User
 
+import requests
+
 pay_type = (
     ('cash', 'cash'),
     ('payme', 'payme'),
@@ -62,3 +64,4 @@ class OrderItem(models.Model):
     food = models.ForeignKey(Food, on_delete=models.CASCADE, related_name='items')
     quantity = models.IntegerField(default=1)
     price = models.PositiveBigIntegerField()
+

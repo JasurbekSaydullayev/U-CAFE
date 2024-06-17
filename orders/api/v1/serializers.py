@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from orders.models import Order, OrderItem
 from foods.models import Food
+from decouple import config
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -46,7 +47,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
     def generate_webhook_url(self, order):
-        return f'ws://127.0.0.1:4000/ws/orders/{order.id}/'
+        return f'ws://{config("SITE_URL")}/ws/orders/{order.id}/'
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
