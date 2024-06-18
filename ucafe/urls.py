@@ -34,7 +34,7 @@ urlpatterns = [
 
     # v2
     path('api/v2/', include('complaints.api.v2.urls')),
-    path('api/v2/', include('users.api.v2.urls')),
+    # path('api/v2/', include('users.api.v2.urls')),
 ]
 
 if settings.DEBUG:

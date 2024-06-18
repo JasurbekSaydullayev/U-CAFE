@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from complaints.models import Complaint
+
+
+@admin.register(Complaint)
+class ComplaintAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'rating', 'created_at')

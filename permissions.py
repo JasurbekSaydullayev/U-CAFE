@@ -8,7 +8,7 @@ class IsAdmin(permissions.BasePermission):
 
 class IsAdminOrOwner(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_superuser or request.user == 'customer'
+        return request.user.is_superuser or request.user
 
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
