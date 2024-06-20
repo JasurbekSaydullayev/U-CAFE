@@ -45,6 +45,7 @@ python-decouple==3.8
 pytz==2024.1
 PyYAML==6.0.1
 redis==5.0.5
+redis-cli==1.0.1
 requests==2.32.3
 service-identity==24.1.0
 simplejson==3.19.2
