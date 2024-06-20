@@ -18,7 +18,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return [AllowAny()]
         elif self.action in ['list', 'retrieve', 'update', 'destroy']:
-            return [IsAuthenticated, IsAdminOrOwner]
+            return [IsAuthenticated(), IsAdminOrOwner()]
 
     def list(self, request, *args, **kwargs):
         user = request.user
