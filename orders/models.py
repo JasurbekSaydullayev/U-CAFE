@@ -37,6 +37,11 @@ delivery_choices = (
     ('delivered', 'Delivered'),
 )
 
+lift_choice = (
+    ('right', 'Right'),
+    ('left', 'Left'),
+)
+
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='orders', null=True, blank=True)
@@ -50,6 +55,7 @@ class Order(models.Model):
     delivery_status = models.CharField(max_length=50, choices=delivery_choices, default='waiting', null=True,
                                        blank=True)
     delivery_address = models.CharField(max_length=255, blank=True, null=True)
+    lift = models.CharField(max_length=50, choices=lift_choice, default='left')
     webhook_url = models.URLField(blank=True, null=True)
 
     def calculate_order_price(self):
@@ -64,4 +70,3 @@ class OrderItem(models.Model):
     food = models.ForeignKey(Food, on_delete=models.CASCADE, related_name='items')
     quantity = models.IntegerField(default=1)
     price = models.PositiveBigIntegerField()
-

@@ -5,39 +5,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Sum, Count
 
-from .DRY import dry
+from orders.DRY import dry
+from permissions import IsAdmin
 from .serializers import OrderItemSerializer, OrderSerializer, OrderDetailSerializer
-from .permissions import IsSuperAdminOrOwner
 from orders.models import Order, OrderItem
 from expenses.models import Expenses
-
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
-
-def send_order_status_webhook(order):
-    if order.webhook_url:
-        data = {
-            'order_id': order.id,
-            'status': order.status,
-            'status_pay': order.status_pay,
-            'full_price': order.full_price
-        }
-        headers = {'Content-Type': 'application/json'}
-        try:
-            response = requests.post(order.webhook_url, json=data, headers=headers)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            print(f"Error sending webhook: {e}")
-
-
-@receiver(post_save, sender=Order)
-def order_status_updated(sender, instance, **kwargs):
-    send_order_status_webhook(instance)
 
 
 # Statistics
 class IncomeAPIView(APIView):
+    permission_classes = (IsAuthenticated, IsAdmin)
+
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         total_income = Order.objects.filter(
@@ -48,6 +26,8 @@ class IncomeAPIView(APIView):
 
 
 class ExpensesAPIView(APIView):
+    permission_classes = (IsAuthenticated, IsAdmin)
+
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         total_expenses = Expenses.objects.filter(
@@ -58,6 +38,8 @@ class ExpensesAPIView(APIView):
 
 
 class SalesAPIView(APIView):
+    permission_classes = (IsAuthenticated, IsAdmin)
+
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         total_sales = Order.objects.filter(
@@ -69,6 +51,8 @@ class SalesAPIView(APIView):
 
 
 class OrdersAPIView(APIView):
+    permission_classes = (IsAuthenticated, IsAdmin)
+
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         takeout_orders = Order.objects.filter(
@@ -88,6 +72,8 @@ class OrdersAPIView(APIView):
 
 
 class PaymentMethodsStatsAPIView(APIView):
+    permission_classes = (IsAuthenticated, IsAdmin)
+
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         stats = Order.objects.filter(
@@ -102,6 +88,8 @@ class PaymentMethodsStatsAPIView(APIView):
 
 
 class PopularCategoriesStatsAPIView(APIView):
+    permission_classes = (IsAuthenticated, IsAdmin)
+
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         stats = OrderItem.objects.filter(
@@ -111,13 +99,7 @@ class PopularCategoriesStatsAPIView(APIView):
             count=Sum('quantity'),
             total_amount=Sum('price')
         ).order_by('-total_amount')
-
         return Response(stats, status=status.HTTP_200_OK)
-
-
-class OrderItemViewSet(viewsets.ModelViewSet):
-    queryset = OrderItem.objects.all()
-    serializer_class = OrderItemSerializer
 
 
 class OrderViewSet(viewsets.ModelViewSet):
