@@ -15,7 +15,7 @@ services:
 
   daphne:
     build: .
-    command: daphne -p 4000 ucafe.asgi:application
+    command: daphne -b 0.0.0.0 -p 4000 ucafe.asgi:application
     container_name: daphne
     expose:
       - 4000
