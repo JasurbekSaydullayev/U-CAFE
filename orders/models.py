@@ -58,12 +58,6 @@ class Order(models.Model):
     lift = models.CharField(max_length=50, choices=lift_choice, default='left')
     webhook_url = models.URLField(blank=True, null=True)
 
-    def calculate_order_price(self):
-        total_price = 0
-        for item in self.items.all():
-            total_price += item.price
-        return total_price
-
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')

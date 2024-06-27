@@ -1,8 +1,10 @@
+from django.db.models.signals import post_save
 from django.utils import timezone
 from datetime import timedelta
 
 from rest_framework import serializers
 from .models import Order, OrderItem
+from .signals import order_status_update
 
 
 def dry(request):
@@ -23,13 +25,16 @@ def serializer_dry(self, validated_data):
     for item in items_data:
         if item['food'].count < item['quantity']:
             raise serializers.ValidationError({"message": f"{item['food'].name} dan siz so'ragan miqdorda qolmagan"})
+    post_save.disconnect(receiver=order_status_update, sender=Order)
     order = Order.objects.create(**validated_data)
+    total_price = 0
     for item_data in items_data:
         food = item_data['food']
         quantity = item_data['quantity']
         food.count -= quantity
         food.save()
         price = food.price * quantity
+        total_price += price
         OrderItem.objects.create(order=order, food=food, quantity=quantity, price=price)
     if order.order_type == "delivery":
         order.delivery_status = "waiting"
@@ -37,8 +42,8 @@ def serializer_dry(self, validated_data):
         order.delivery_status = None
     order.status_pay = 'unpaid'
     order.status = 'new'
-    order.full_price = order.calculate_order_price()
+    order.full_price = total_price
     order.position = len(items_data)
-    order.webhook_url = self.generate_webhook_url(order)
+    post_save.connect(receiver=order_status_update, sender=Order)
     order.save()
     return order

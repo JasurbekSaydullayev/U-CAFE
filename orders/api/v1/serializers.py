@@ -29,9 +29,6 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return serializer_dry(self, validated_data)
 
-    def generate_webhook_url(self, order):
-        return f'ws://{config("SITE_URL")}/ws/orders/{order.id}/'
-
 
 class OrderDetailSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
