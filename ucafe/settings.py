@@ -2,6 +2,8 @@ from pathlib import Path
 from decouple import config
 from permissions import IsAdmin
 
+from corsheaders.defaults import default_headers
+
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -33,6 +35,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework_swagger',
     'channels',
+    'corsheaders',
 
     # apps
     'orders.apps.OrdersConfig',
@@ -50,6 +53,23 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'corsheaders.middleware.CorsMiddleware',
+]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'my-custom-header',
 ]
 
 ROOT_URLCONF = 'ucafe.urls'
