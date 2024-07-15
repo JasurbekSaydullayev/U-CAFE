@@ -1,5 +1,16 @@
 version: '3'
 services:
+  db:
+    image: postgres:14-alpine
+    container_name: db
+    environment:
+      - POSTGRES_DB=ucafe
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=856329471Jas
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
   web:
     build: .
     command: gunicorn ucafe.wsgi:application --bind 0.0.0.0:8000
@@ -21,21 +32,11 @@ services:
       - 4000
     depends_on:
       - db
-      - redis  # Сохраните зависимость от redis
+      - redis
     volumes:
       - .:/app
     restart: unless-stopped
 
-  db:
-    image: postgres:14-alpine
-    container_name: db
-    environment:
-      - POSTGRES_DB=ucafe
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=856329471Jas
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
 
   redis:
     image: redis:latest
