@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from django.db.models import Sum, Count
 
 from orders.DRY import dry
+from pagination import StandardResultsSetPagination
 from permissions import IsAdmin
 from .serializers import OrderItemSerializer, OrderSerializer, OrderDetailSerializer
 from orders.models import Order, OrderItem
@@ -106,6 +107,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     http_method_names = ['get', 'post', 'put', 'patch']
+    pagination_class = StandardResultsSetPagination
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -118,3 +120,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             serializer.validated_data['user'] = request.user
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        order_status = request.query_params.get('status', None)
+        orders = Order.objects.filter(status=order_status).all()
+        page = self.paginate_queryset(orders)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
