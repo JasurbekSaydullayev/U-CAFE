@@ -121,9 +121,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def list(self, request, *args, **kwargs):
-        order_status = request.query_params.get('status', None)
-        orders = Order.objects.filter(status=order_status).all()
-        page = self.paginate_queryset(orders)
-        serializer = self.get_serializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
+    # def list(self, request, *args, **kwargs):
+    #     order_status = request.query_params.get('status', None)
+    #     orders = Order.objects.filter(status=order_status).all()
+    #     page = self.paginate_queryset(orders)
+    #     serializer = self.get_serializer(page, many=True)
+    #     return self.get_paginated_response(serializer.data)
