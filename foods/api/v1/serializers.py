@@ -9,7 +9,7 @@ class PhotoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate(self, data):
-        file = data.get('file')
+        file = data.get('image')
         if file.size > 1024 * 1024:  # 1 MB
             raise serializers.ValidationError("File size exceeds the limit of 1 MB")
         return data
