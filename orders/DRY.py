@@ -40,7 +40,6 @@ def serializer_dry(self, validated_data):
         order.delivery_status = "waiting"
     else:
         order.delivery_status = None
-    order.status_pay = 'unpaid'
     order.status = 'new'
     order.full_price = total_price
     order.position = len(items_data)
