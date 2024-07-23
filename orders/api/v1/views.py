@@ -127,6 +127,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             orders = Order.objects.filter(status=order_status).all()
         else:
             orders = Order.objects.all()
+        status_pay = request.query_params.get('status_pay', None)
+        if status_pay:
+            orders = orders.filter(status_pay=status_pay)
+        else:
+            pass
         page = self.paginate_queryset(orders)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
