@@ -1,5 +1,8 @@
+from datetime import datetime
+
 import requests
 from rest_framework import status, viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,7 +11,7 @@ from django.db.models import Sum, Count
 from orders.DRY import dry
 from pagination import StandardResultsSetPagination
 from permissions import IsAdmin
-from .serializers import OrderItemSerializer, OrderSerializer, OrderDetailSerializer
+from .serializers import OrderSerializer, OrderDetailSerializer
 from orders.models import Order, OrderItem
 from expenses.models import Expenses
 
@@ -123,15 +126,37 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         order_status = request.query_params.get('status', None)
-        if order_status:
-            orders = Order.objects.filter(status=order_status).all()
-        else:
-            orders = Order.objects.all()
         status_pay = request.query_params.get('status_pay', None)
+        today = datetime.today().date()
+        orders = Order.objects.filter(created_at__date=today)
+        if order_status:
+            orders = orders.filter(status=order_status)
         if status_pay:
             orders = orders.filter(status_pay=status_pay)
-        else:
-            pass
         page = self.paginate_queryset(orders)
-        serializer = self.get_serializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(orders, many=True)
+        return Response(serializer.data)
+
+
+class GetHistoryOrders(APIView):
+    serializer_class = OrderSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get(self, request, format=None):
+        start_date, end_date = dry(request)
+        orders = Order.objects.filter(
+            status='completed',
+            created_at__range=(start_date, end_date)
+        ).order_by('-created_at')
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(orders, request)
+        if page is not None:
+            serializer = self.serializer_class(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = self.serializer_class(orders, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
