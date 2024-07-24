@@ -1,6 +1,8 @@
 from datetime import datetime
 
 import requests
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -15,11 +17,23 @@ from .serializers import OrderSerializer, OrderDetailSerializer
 from orders.models import Order, OrderItem
 from expenses.models import Expenses
 
+manual_parameters = [
+    openapi.Parameter('start_date', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, format='date',
+                      description='Start date in YYYY-MM-DD format'),
+    openapi.Parameter('end_date', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, format='date',
+                      description='End date in YYYY-MM-DD format'),
+    openapi.Parameter('start_time', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, format='time',
+                      description='Start time in HH:MM:SS format'),
+    openapi.Parameter('end_time', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, format='time',
+                      description='End time in HH:MM:SS format'),
+]
+
 
 # Statistics
 class IncomeAPIView(APIView):
     permission_classes = (IsAuthenticated, IsAdmin)
 
+    @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         total_income = Order.objects.filter(
@@ -32,6 +46,7 @@ class IncomeAPIView(APIView):
 class ExpensesAPIView(APIView):
     permission_classes = (IsAuthenticated, IsAdmin)
 
+    @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         total_expenses = Expenses.objects.filter(
@@ -44,6 +59,7 @@ class ExpensesAPIView(APIView):
 class SalesAPIView(APIView):
     permission_classes = (IsAuthenticated, IsAdmin)
 
+    @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         total_sales = Order.objects.filter(
@@ -57,6 +73,7 @@ class SalesAPIView(APIView):
 class OrdersAPIView(APIView):
     permission_classes = (IsAuthenticated, IsAdmin)
 
+    @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         takeout_orders = Order.objects.filter(
@@ -78,6 +95,7 @@ class OrdersAPIView(APIView):
 class PaymentMethodsStatsAPIView(APIView):
     permission_classes = (IsAuthenticated, IsAdmin)
 
+    @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         stats = Order.objects.filter(
@@ -94,6 +112,8 @@ class PaymentMethodsStatsAPIView(APIView):
 class PopularCategoriesStatsAPIView(APIView):
     permission_classes = (IsAuthenticated, IsAdmin)
 
+    @swagger_auto_schema(
+        manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         stats = OrderItem.objects.filter(
@@ -146,6 +166,13 @@ class GetHistoryOrders(APIView):
     serializer_class = OrderSerializer
     pagination_class = StandardResultsSetPagination
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('page', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Page number'),
+            openapi.Parameter('page_size', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
+                              description='Number of results per page'),
+        ] + manual_parameters
+    )
     def get(self, request, format=None):
         start_date, end_date = dry(request)
         orders = Order.objects.filter(

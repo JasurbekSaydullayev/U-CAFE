@@ -24,11 +24,28 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'pay_type', 'status', 'order_type', 'items', 'status_pay',
+        fields = ['id', 'pay_type', 'status', 'order_type', 'items', 'status_pay', 'position',
                   'full_price', 'webhook_url', 'created_at', 'delivery_status']
 
     def create(self, validated_data):
         return serializer_dry(self, validated_data)
+
+    def update(self, instance, validated_data):
+        if instance.status == 'completed':
+            raise serializers.ValidationError(
+                {"status": False, 'msg': "Tugatilgan yoki jarayondagi buyurtmani o'zgartirish mumkin emas"})
+
+        items_data = validated_data.pop('items', None)
+
+        instance.pay_type = validated_data.get('pay_type', instance.pay_type)
+        instance.status = validated_data.get('status', instance.status)
+        instance.order_type = validated_data.get('order_type', instance.order_type)
+        instance.status_pay = validated_data.get('status_pay', instance.status_pay)
+        instance.save()
+
+        print(instance.items)
+
+        return instance
 
 
 class OrderItemSerializerForDetailView(serializers.ModelSerializer):
