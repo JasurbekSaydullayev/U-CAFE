@@ -50,7 +50,7 @@ class OrderSerializer(serializers.ModelSerializer):
             food = item_data.get('food')
             quantity = item_data.get('quantity')
 
-            existing_item = instance.items.filter(food=food).first()
+            existing_item = instance.items.filter(food=food).first()    # @
 
             if existing_item:
                 quantity_diff = quantity - existing_item.quantity
