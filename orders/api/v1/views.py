@@ -148,7 +148,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order_status = request.query_params.get('status', None)
         status_pay = request.query_params.get('status_pay', None)
         today = datetime.today().date()
-        orders = Order.objects.filter(created_at__date=today)
+        orders = Order.objects.filter(created_at__date=today).order_by('-created_at')
         if order_status:
             orders = orders.filter(status=order_status)
         if status_pay:
