@@ -91,7 +91,7 @@ class OrderSerializer(serializers.ModelSerializer):
             instance.full_price = instance.items.aggregate(total=Sum('price'))['total']
             instance.save()
 
-        return instance
+        return instance #
 
 
 class OrderItemSerializerForDetailView(serializers.ModelSerializer):
