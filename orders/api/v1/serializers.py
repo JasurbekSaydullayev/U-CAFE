@@ -46,48 +46,50 @@ class OrderSerializer(serializers.ModelSerializer):
         instance.position = validated_data.get('position', instance.position)
         instance.save()
 
-        for item_data in items_data:
-            food = item_data.get('food')
-            quantity = item_data.get('quantity')
+        if items_data:
 
-            existing_item = instance.items.filter(food=food).first()    # @
+            for item_data in items_data:
+                food = item_data.get('food')
+                quantity = item_data.get('quantity')
 
-            if existing_item:
-                quantity_diff = quantity - existing_item.quantity
-                if quantity_diff == 0:
-                    continue
-                elif quantity_diff > 0:
-                    if food.count < quantity_diff:
+                existing_item = instance.items.filter(food=food).first()
+
+                if existing_item:
+                    quantity_diff = quantity - existing_item.quantity
+                    if quantity_diff == 0:
+                        continue
+                    elif quantity_diff > 0:
+                        if food.count < quantity_diff:
+                            raise serializers.ValidationError(
+                                {"status": False, 'msg': f"{food.name} ovqatdan yetarli miqdor yo'q"}
+                            )
+                        food.count -= quantity_diff
+                    else:
+                        food.count += abs(quantity_diff)
+
+                    food.save()
+
+                    existing_item.quantity = quantity
+                    existing_item.price = food.price * quantity
+                    existing_item.save()
+                else:
+                    if food.count < quantity:
                         raise serializers.ValidationError(
                             {"status": False, 'msg': f"{food.name} ovqatdan yetarli miqdor yo'q"}
                         )
-                    food.count -= quantity_diff
-                else:
-                    food.count += abs(quantity_diff)
 
-                food.save()
+                    food.count -= quantity
+                    food.save()
 
-                existing_item.quantity = quantity
-                existing_item.price = food.price * quantity
-                existing_item.save()
-            else:
-                if food.count < quantity:
-                    raise serializers.ValidationError(
-                        {"status": False, 'msg': f"{food.name} ovqatdan yetarli miqdor yo'q"}
-                    )
+                    OrderItem.objects.create(order=instance, food=food, quantity=quantity, price=food.price * quantity)
 
-                food.count -= quantity
-                food.save()
-
-                OrderItem.objects.create(order=instance, food=food, quantity=quantity, price=food.price * quantity)
-
-        instance.items.filter(quantity=0).delete()
-        if instance.items.count() == 0:
-            instance.delete()
-            raise serializers.ValidationError({"status": True, 'msg': "Buyurtma bekor qilindi"})
-        instance.position = instance.items.all().count()
-        instance.full_price = instance.items.aggregate(total=Sum('price'))['total']
-        instance.save()
+            instance.items.filter(quantity=0).delete()
+            if instance.items.count() == 0:
+                instance.delete()
+                raise serializers.ValidationError({"status": True, 'msg': "Buyurtma bekor qilindi"})
+            instance.position = instance.items.all().count()
+            instance.full_price = instance.items.aggregate(total=Sum('price'))['total']
+            instance.save()
 
         return instance
 
