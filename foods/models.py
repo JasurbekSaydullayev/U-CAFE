@@ -25,16 +25,9 @@ class Food(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+    image = models.ImageField(upload_to='photos')
     category = models.CharField(max_length=100, choices=category_choice, default='breakfast')
     day = models.CharField(max_length=100, choices=day_choice, null=True, blank=True)
 
     def __str__(self):
         return self.name
-
-
-class Photo(models.Model):
-    food = models.ForeignKey(Food, on_delete=models.CASCADE, related_name='photos')
-    image = models.ImageField(upload_to='photos')
-
-    def __str__(self):
-        return self.food.name

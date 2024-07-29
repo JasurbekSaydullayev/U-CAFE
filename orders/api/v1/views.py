@@ -22,10 +22,6 @@ manual_parameters = [
                       description='Start date in YYYY-MM-DD format'),
     openapi.Parameter('end_date', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, format='date',
                       description='End date in YYYY-MM-DD format'),
-    openapi.Parameter('start_time', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, format='time',
-                      description='Start time in HH:MM:SS format'),
-    openapi.Parameter('end_time', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, format='time',
-                      description='End time in HH:MM:SS format'),
 ]
 
 
@@ -168,17 +164,28 @@ class GetHistoryOrders(APIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter('page', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Page number'),
-            openapi.Parameter('page_size', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
-                              description='Number of results per page'),
-        ] + manual_parameters
+                              openapi.Parameter('page', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
+                                                description='Page number'),
+                              openapi.Parameter('page_size', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
+                                                description='Number of results per page'),
+                              openapi.Parameter('order_type', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+                                                description='Types are:  delivery, with, there'),
+                              openapi.Parameter('pay_type', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+                                                description='Types are: cash, payme, click, terminal')
+                          ] + manual_parameters
     )
     def get(self, request, format=None):
         start_date, end_date = dry(request)
+        order_type = request.query_params.get('order_type', None)
+        pay_type = request.query_params.get('pay_type', None)
         orders = Order.objects.filter(
             status='completed',
             created_at__range=(start_date, end_date)
         ).order_by('-created_at')
+        if order_type:
+            orders = orders.filter(order_type=order_type)
+        if pay_type:
+            orders = orders.filter(pay_type=pay_type)
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(orders, request)
         if page is not None:

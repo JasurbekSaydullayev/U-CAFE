@@ -1,9 +1,11 @@
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from .serializers import FoodSerializer, FoodDetailSerializer, PhotoSerializer
-from foods.models import Food, Photo
+from .serializers import FoodSerializer, FoodDetailSerializer
+from foods.models import Food
 
 from pagination import StandardResultsSetPagination
 
@@ -12,6 +14,7 @@ class FoodViewSet(viewsets.ModelViewSet):
     queryset = Food.objects.all()
     serializer_class = FoodSerializer
     pagination_class = StandardResultsSetPagination
+    parser_classes = (MultiPartParser, FormParser)
 
     def get_serializer_class(self):
         if self.action in ['list', 'delete']:
@@ -19,6 +22,22 @@ class FoodViewSet(viewsets.ModelViewSet):
         elif self.action in ['retrieve', 'partial_update', 'update', 'create']:
             return FoodDetailSerializer
 
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter(
+            'image', openapi.IN_FORM, type=openapi.TYPE_FILE, description='Upload image'
+        )
+    ])
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('category', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, format='string',
+                          description='Category'),
+    ])
     def list(self, request, *args, **kwargs):
         category = request.query_params.get('category')
         if category:
@@ -32,17 +51,3 @@ class FoodViewSet(viewsets.ModelViewSet):
         else:
             serializer = self.get_serializer(foods, many=True)
             return Response(serializer.data)
-
-
-class PhotoViewSet(viewsets.ModelViewSet):
-    queryset = Photo.objects.all()
-    serializer_class = PhotoSerializer
-    parser_classes = (MultiPartParser, FormParser)
-    http_method_names = ['post', 'put', 'delete']
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
