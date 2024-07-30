@@ -21,7 +21,7 @@ class FoodViewSet(viewsets.ModelViewSet):
             return FoodSerializer
         elif self.action in ['retrieve', 'partial_update', 'update', 'create']:
             return FoodDetailSerializer
-#
+
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter(
             'image', openapi.IN_FORM, type=openapi.TYPE_FILE, description='Upload image'

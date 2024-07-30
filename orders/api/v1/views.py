@@ -94,7 +94,7 @@ class PaymentMethodsStatsAPIView(APIView):
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date = dry(request)
-        stats = Order.objects.filter(
+        orders = Order.objects.filter(
             status='completed',
             created_at__range=(start_date, end_date)
         ).values('pay_type').annotate(
@@ -102,7 +102,25 @@ class PaymentMethodsStatsAPIView(APIView):
             total_amount=Sum('full_price')
         ).order_by('-total_amount')
 
-        return Response(stats, status=status.HTTP_200_OK)
+        total_orders = Order.objects.filter(
+            status='completed',
+            created_at__range=(start_date, end_date)
+        ).count()
+
+        results = []
+        for order in orders:
+            pay_type = order['pay_type']
+            count = order['count']
+            total_amount = order['total_amount']
+            percentage = (count / total_orders) * 100 if total_orders > 0 else 0
+            results.append({
+                'pay_type': pay_type,
+                'count': count,
+                'total_amount': total_amount,
+                'percentage': percentage
+            })
+
+        return Response(results)
 
 
 class PopularCategoriesStatsAPIView(APIView):
@@ -112,14 +130,32 @@ class PopularCategoriesStatsAPIView(APIView):
         manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date = dry(request)
-        stats = OrderItem.objects.filter(
+
+        category_stats = OrderItem.objects.filter(
             order__status='completed',
             order__created_at__range=(start_date, end_date)
         ).values('food__category').annotate(
             count=Sum('quantity'),
             total_amount=Sum('price')
         ).order_by('-total_amount')
-        return Response(stats, status=status.HTTP_200_OK)
+
+        total_quantity = sum(category['count'] for category in category_stats)
+        total_amount = sum(category['total_amount'] for category in category_stats)
+
+        results = []
+        for category in category_stats:
+            category_name = category['food__category']
+            count = category['count']
+            amount = category['total_amount']
+            percentage_quantity = round((count / total_quantity) * 100, 1) if total_quantity > 0 else 0
+            results.append({
+                'category': category_name,
+                'count': count,
+                'total_amount': amount,
+                'percentage_quantity': percentage_quantity,
+            })
+
+        return Response(results, status=status.HTTP_200_OK)
 
 
 class OrderViewSet(viewsets.ModelViewSet):
