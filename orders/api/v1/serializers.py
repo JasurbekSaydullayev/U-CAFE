@@ -109,3 +109,11 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = "__all__"
+
+
+class SalesReportSerializer(serializers.Serializer):
+    name = serializers.CharField(source='food__name')
+    category = serializers.CharField(source='food__category')
+    total_quantity = serializers.IntegerField()
+    price_per_unit = serializers.IntegerField(source='food__price')
+    total_sales = serializers.IntegerField()

@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views import (
     IncomeAPIView, ExpensesAPIView, SalesAPIView, OrdersAPIView,
-    PaymentMethodsStatsAPIView, PopularCategoriesStatsAPIView, OrderViewSet, GetHistoryOrders
+    PaymentMethodsStatsAPIView, PopularCategoriesStatsAPIView, OrderViewSet, GetHistoryOrders, SalesReportView
 )
 
 router = DefaultRouter()
@@ -16,6 +16,7 @@ urlpatterns = [
     path('statistics/payment-methods/', PaymentMethodsStatsAPIView.as_view(), name='payment-methods-stats'),
     path('statistics/popular-categories/', PopularCategoriesStatsAPIView.as_view(), name='popular-categories-stats'),
     path('get-history-orders/', GetHistoryOrders.as_view(), name='get-history-orders'),
+    path('statistics/sales-foods/', SalesReportView.as_view(), name='sales-foods'),
 
 ]
 

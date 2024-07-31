@@ -8,12 +8,12 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, F
 
 from orders.DRY import dry
 from pagination import StandardResultsSetPagination
 from permissions import IsAdmin
-from .serializers import OrderSerializer, OrderDetailSerializer
+from .serializers import OrderSerializer, OrderDetailSerializer, SalesReportSerializer
 from orders.models import Order, OrderItem
 from expenses.models import Expenses
 
@@ -230,3 +230,33 @@ class GetHistoryOrders(APIView):
 
         serializer = self.serializer_class(orders, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SalesReportView(APIView):
+    pagination_class = StandardResultsSetPagination
+    serializer_class = SalesReportSerializer
+
+    @swagger_auto_schema(
+        manual_parameters=manual_parameters + [
+            openapi.Parameter('page', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
+                              description='Page number'),
+            openapi.Parameter('page_size', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
+                              description='Number of results per page')])
+    def get(self, request):
+        sales_data = OrderItem.objects.values(
+            'food__name',
+            'food__category',
+            'food__price'
+        ).annotate(
+            total_quantity=Sum('quantity'),
+            total_sales=Sum(F('quantity') * F('food__price'))
+        ).order_by('-quantity')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(sales_data, request)
+        if page is not None:
+            serializer = self.serializer_class(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = self.serializer_class(sales_data, many=True)
+        return Response(serializer.data)
