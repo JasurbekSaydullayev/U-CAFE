@@ -14,7 +14,7 @@ category_choice = (
     ('bar', 'bar'),
     ('snack', 'snack'),
     ('dessert', 'dessert'),
-    ('proper nutrition', 'proper nutrition'),
+    ('proper_nutrition', 'proper_nutrition'),
 )
 
 
