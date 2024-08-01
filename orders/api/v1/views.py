@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Sum, Count, F
 
+from foods.models import Food
 from orders.DRY import dry
 from pagination import StandardResultsSetPagination
 from permissions import IsAdmin
@@ -26,7 +27,6 @@ manual_parameters = [
 ]
 
 
-# Statistics
 class IncomeAPIView(APIView):
     permission_classes = (IsAuthenticated, IsAdmin)
 
@@ -164,6 +164,7 @@ class PaymentMethodsStatsAPIView(APIView):
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date, previous_start_date, previous_end_date = dry(request)
+
         orders = Order.objects.filter(
             status='completed',
             created_at__range=(start_date, end_date)
@@ -177,11 +178,17 @@ class PaymentMethodsStatsAPIView(APIView):
             created_at__range=(start_date, end_date)
         ).count()
 
+        order_dict = {order['pay_type']: order for order in orders}
+
         results = []
-        for order in orders:
-            pay_type = order['pay_type']
-            count = order['count']
-            total_amount = order['total_amount']
+        for pay_type_choice in Order._meta.get_field('pay_type').choices:
+            pay_type = pay_type_choice[0]
+            if pay_type in order_dict:
+                count = order_dict[pay_type]['count']
+                total_amount = order_dict[pay_type]['total_amount']
+            else:
+                count = 0
+                total_amount = 0
             percentage = (count / total_orders) * 100 if total_orders > 0 else 0
             results.append({
                 'pay_type': pay_type,
@@ -196,8 +203,7 @@ class PaymentMethodsStatsAPIView(APIView):
 class PopularCategoriesStatsAPIView(APIView):
     permission_classes = (IsAuthenticated, IsAdmin)
 
-    @swagger_auto_schema(
-        manual_parameters=manual_parameters)
+    @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date, previous_start_date, previous_end_date = dry(request)
 
@@ -212,11 +218,17 @@ class PopularCategoriesStatsAPIView(APIView):
         total_quantity = sum(category['count'] for category in category_stats)
         total_amount = sum(category['total_amount'] for category in category_stats)
 
+        category_dict = {category['food__category']: category for category in category_stats}
+
         results = []
-        for category in category_stats:
-            category_name = category['food__category']
-            count = category['count']
-            amount = category['total_amount']
+        for category_choice in Food._meta.get_field('category').choices:
+            category_name = category_choice[0]
+            if category_name in category_dict:
+                count = category_dict[category_name]['count']
+                amount = category_dict[category_name]['total_amount']
+            else:
+                count = 0
+                amount = 0
             percentage_quantity = round((count / total_quantity) * 100, 1) if total_quantity > 0 else 0
             results.append({
                 'category': category_name,
@@ -357,5 +369,5 @@ class SalesByDayOfWeekAPIView(APIView):
                 elif order['order_type'] == 'delivery':
                     sales_data[day_of_week]['delivery'] += 1
             # cache.set('sales_by_day', sales_data, timeout=300)
-#
+        #
         return Response(sales_data, status=status.HTTP_200_OK)

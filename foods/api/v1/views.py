@@ -15,7 +15,7 @@ class FoodViewSet(viewsets.ModelViewSet):
     serializer_class = FoodSerializer
     pagination_class = StandardResultsSetPagination
     parser_classes = (MultiPartParser, FormParser)
-#
+
     def get_serializer_class(self):
         if self.action in ['list', 'delete']:
             return FoodSerializer
