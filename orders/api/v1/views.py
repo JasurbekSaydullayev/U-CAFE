@@ -337,25 +337,25 @@ class SalesByDayOfWeekAPIView(APIView):
 
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
-        sales_data = cache.get('sales_by_day')
-        if sales_data is None:
-            start_date, end_date, previous_start_date, previous_end_date = dry(request)
+        # sales_data = cache.get('sales_by_day')
+        # if sales_data is None:
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
 
-            days_of_week = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-            sales_data = {day: {'takeout': 0, 'delivery': 0} for day in days_of_week}
+        days_of_week = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        sales_data = {day: {'takeout': 0, 'delivery': 0} for day in days_of_week}
 
-            orders = Order.objects.filter(
-                status='completed',
-                created_at__range=(start_date, end_date)
-            ).values('created_at', 'order_type')
+        orders = Order.objects.filter(
+            status='completed',
+            created_at__range=(start_date, end_date)
+        ).values('created_at', 'order_type')
 
-            for order in orders:
-                day_of_week = order['created_at'].strftime('%A').lower()
-                if day_of_week in sales_data:
-                    if order['order_type'] == 'with':
-                        sales_data[day_of_week]['takeout'] += 1
-                    elif order['order_type'] == 'delivery':
-                        sales_data[day_of_week]['delivery'] += 1
-            cache.set('sales_by_day', sales_data, timeout=300)
+        for order in orders:
+            day_of_week = order['created_at'].strftime('%A').lower()
+            if day_of_week in sales_data:
+                if order['order_type'] == 'with':
+                    sales_data[day_of_week]['takeout'] += 1
+                elif order['order_type'] == 'delivery':
+                    sales_data[day_of_week]['delivery'] += 1
+            # cache.set('sales_by_day', sales_data, timeout=300)
 #
         return Response(sales_data, status=status.HTTP_200_OK)
