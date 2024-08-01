@@ -19,6 +19,7 @@ services:
       - 8000
     volumes:
       - static_files:/app/static
+      - media_files:/app/media
     depends_on:
       - db
       - redis
@@ -35,8 +36,8 @@ services:
       - redis
     volumes:
       - .:/app
+      - media_files:/app/media
     restart: unless-stopped
-
 
   redis:
     image: redis:latest
@@ -51,6 +52,7 @@ services:
       - 80:80
     volumes:
       - static_files:/app/static
+      - media_files:/app/media
     depends_on:
       - web
     restart: unless-stopped
@@ -58,3 +60,4 @@ services:
 volumes:
   pgdata:
   static_files:
+  media_files:
