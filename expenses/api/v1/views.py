@@ -25,7 +25,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def list(self, request, *args, **kwargs):
-        start_date, end_date = dry(request)
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
         queryset = Expenses.objects.filter(date__range=(start_date, end_date)).order_by('-date')
         page = self.paginate_queryset(queryset)
         if page is not None:

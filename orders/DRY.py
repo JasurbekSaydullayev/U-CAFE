@@ -10,6 +10,7 @@ from .signals import order_status_update
 def dry(request):
     start_date = request.query_params.get('start_date', (timezone.now() - timedelta(days=30)).date())
     end_date = request.query_params.get('end_date', timezone.now().date())
+
     if isinstance(start_date, str):
         start_date = timezone.datetime.strptime(start_date, '%Y-%m-%d').date()
     if isinstance(end_date, str):
@@ -17,7 +18,11 @@ def dry(request):
 
     start_date = timezone.make_aware(timezone.datetime.combine(start_date, timezone.datetime.min.time()))
     end_date = timezone.make_aware(timezone.datetime.combine(end_date, timezone.datetime.max.time()))
-    return start_date, end_date
+
+    previous_start_date = start_date - (end_date - start_date)
+    previous_end_date = start_date
+
+    return start_date, end_date, previous_start_date, previous_end_date
 
 
 def serializer_dry(self, validated_data):

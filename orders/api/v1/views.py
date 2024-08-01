@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import requests
+from django.core.cache import cache
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, viewsets
@@ -31,12 +32,27 @@ class IncomeAPIView(APIView):
 
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
-        start_date, end_date = dry(request)
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
+
         total_income = Order.objects.filter(
             status='completed',
             created_at__range=(start_date, end_date)
         ).aggregate(total_income=Sum('full_price'))['total_income'] or 0
-        return Response({'total_income': total_income}, status=status.HTTP_200_OK)
+
+        previous_total_income = Order.objects.filter(
+            status='completed',
+            created_at__range=(previous_start_date, previous_end_date)
+        ).aggregate(previous_total_income=Sum('full_price'))['previous_total_income'] or 0
+
+        if previous_total_income:
+            percentage_change = ((total_income - previous_total_income) / previous_total_income) * 100
+        else:
+            percentage_change = None
+
+        return Response({
+            'total_income': total_income,
+            'percentage_change': percentage_change
+        }, status=status.HTTP_200_OK)
 
 
 class ExpensesAPIView(APIView):
@@ -44,12 +60,25 @@ class ExpensesAPIView(APIView):
 
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
-        start_date, end_date = dry(request)
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
+
         total_expenses = Expenses.objects.filter(
             date__range=(start_date, end_date)
         ).aggregate(total_expenses=Sum('price'))['total_expenses'] or 0
 
-        return Response({'total_expenses': total_expenses}, status=status.HTTP_200_OK)
+        previous_total_expenses = Expenses.objects.filter(
+            date__range=(previous_start_date, previous_end_date)
+        ).aggregate(total_expenses=Sum('price'))['total_expenses'] or 0
+
+        if previous_total_expenses:
+            percentage_change = ((total_expenses - previous_total_expenses) / previous_total_expenses) * 100
+        else:
+            percentage_change = None
+
+        return Response({
+            'total_expenses': total_expenses,
+            'percentage_change': percentage_change
+        }, status=status.HTTP_200_OK)
 
 
 class SalesAPIView(APIView):
@@ -57,13 +86,27 @@ class SalesAPIView(APIView):
 
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
-        start_date, end_date = dry(request)
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
+
         total_sales = Order.objects.filter(
             status='completed',
             created_at__range=(start_date, end_date)
         ).count()
 
-        return Response({'total_sales': total_sales}, status=status.HTTP_200_OK)
+        previous_total_sales = Order.objects.filter(
+            status='completed',
+            created_at__range=(previous_start_date, previous_end_date)
+        ).count()
+
+        if previous_total_sales:
+            percentage_change = ((total_sales - previous_total_sales) / previous_total_sales) * 100
+        else:
+            percentage_change = None
+
+        return Response({
+            'total_sales': total_sales,
+            'percentage_change': percentage_change
+        }, status=status.HTTP_200_OK)
 
 
 class OrdersAPIView(APIView):
@@ -71,11 +114,18 @@ class OrdersAPIView(APIView):
 
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
-        start_date, end_date = dry(request)
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
+
         takeout_orders = Order.objects.filter(
             order_type='with',
             status='completed',
             created_at__range=(start_date, end_date)
+        ).count()
+
+        previous_takeout_orders = Order.objects.filter(
+            order_type='with',
+            status='completed',
+            created_at__range=(previous_start_date, previous_end_date)
         ).count()
 
         delivery_orders = Order.objects.filter(
@@ -84,8 +134,28 @@ class OrdersAPIView(APIView):
             created_at__range=(start_date, end_date)
         ).count()
 
-        return Response({'takeout_orders': takeout_orders, 'delivery_orders': delivery_orders},
-                        status=status.HTTP_200_OK)
+        previous_delivery_orders = Order.objects.filter(
+            order_type='delivery',
+            status='completed',
+            created_at__range=(previous_start_date, previous_end_date)
+        ).count()
+
+        if previous_takeout_orders:
+            takeout_percentage_change = ((takeout_orders - previous_takeout_orders) / previous_takeout_orders) * 100
+        else:
+            takeout_percentage_change = None
+
+        if previous_delivery_orders:
+            delivery_percentage_change = ((delivery_orders - previous_delivery_orders) / previous_delivery_orders) * 100
+        else:
+            delivery_percentage_change = None
+
+        return Response({
+            'takeout_orders': takeout_orders,
+            'takeout_percentage_change': takeout_percentage_change,
+            'delivery_orders': delivery_orders,
+            'delivery_percentage_change': delivery_percentage_change
+        }, status=status.HTTP_200_OK)
 
 
 class PaymentMethodsStatsAPIView(APIView):
@@ -93,7 +163,7 @@ class PaymentMethodsStatsAPIView(APIView):
 
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
-        start_date, end_date = dry(request)
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
         orders = Order.objects.filter(
             status='completed',
             created_at__range=(start_date, end_date)
@@ -129,7 +199,7 @@ class PopularCategoriesStatsAPIView(APIView):
     @swagger_auto_schema(
         manual_parameters=manual_parameters)
     def get(self, request, format=None):
-        start_date, end_date = dry(request)
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
 
         category_stats = OrderItem.objects.filter(
             order__status='completed',
@@ -211,7 +281,7 @@ class GetHistoryOrders(APIView):
                           ] + manual_parameters
     )
     def get(self, request, format=None):
-        start_date, end_date = dry(request)
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
         order_type = request.query_params.get('order_type', None)
         pay_type = request.query_params.get('pay_type', None)
         orders = Order.objects.filter(
@@ -260,3 +330,32 @@ class SalesReportView(APIView):
 
         serializer = self.serializer_class(sales_data, many=True)
         return Response(serializer.data)
+
+
+class SalesByDayOfWeekAPIView(APIView):
+    permission_classes = (IsAuthenticated, IsAdmin)
+
+    @swagger_auto_schema(manual_parameters=manual_parameters)
+    def get(self, request, format=None):
+        sales_data = cache.get('sales_by_day')
+        if sales_data is None:
+            start_date, end_date, previous_start_date, previous_end_date = dry(request)
+
+            days_of_week = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+            sales_data = {day: {'takeout': 0, 'delivery': 0} for day in days_of_week}
+
+            orders = Order.objects.filter(
+                status='completed',
+                created_at__range=(start_date, end_date)
+            ).values('created_at', 'order_type')
+
+            for order in orders:
+                day_of_week = order['created_at'].strftime('%A').lower()
+                if day_of_week in sales_data:
+                    if order['order_type'] == 'with':
+                        sales_data[day_of_week]['takeout'] += 1
+                    elif order['order_type'] == 'delivery':
+                        sales_data[day_of_week]['delivery'] += 1
+            cache.set('sales_by_day', sales_data, timeout=300)
+
+        return Response(sales_data, status=status.HTTP_200_OK)
