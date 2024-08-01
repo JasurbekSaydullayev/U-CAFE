@@ -357,5 +357,5 @@ class SalesByDayOfWeekAPIView(APIView):
                     elif order['order_type'] == 'delivery':
                         sales_data[day_of_week]['delivery'] += 1
             cache.set('sales_by_day', sales_data, timeout=300)
-
+#
         return Response(sales_data, status=status.HTTP_200_OK)
