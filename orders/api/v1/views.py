@@ -258,6 +258,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('status_pay', in_=openapi.IN_QUERY, type=openapi.TYPE_BOOLEAN,
+                          description='Enter status pay'), ])
     def list(self, request, *args, **kwargs):
         order_status = request.query_params.get('status', None)
         status_pay = request.query_params.get('status_pay', None)
