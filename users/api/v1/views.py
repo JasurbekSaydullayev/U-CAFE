@@ -42,6 +42,6 @@ class GetUserInfo(APIView):
             })
 
 
-class ChangePassword(APIView):
-    def post(self, request, *args, **kwargs):
-
+# class ChangePassword(APIView):
+#     def post(self, request, *args, **kwargs):
+#
