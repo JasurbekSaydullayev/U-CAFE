@@ -3,6 +3,9 @@ from django.db import models
 
 user_type = (
     ('Admin', 'Admin'),
+    ('Manager', 'Manager'),
+    ('Cook', 'Cook'),
+    ('Cashier', 'Cashier'),
     ('Courier', 'Courier'),
     ('Barmen', 'Barmen'),
     ('Waitress', 'Waitress'),

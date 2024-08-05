@@ -2,6 +2,7 @@ from django.contrib.auth.hashers import make_password
 
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from users.api.v1.serializers import UserDashboardSerializer, UserDetailSerializer
 from users.models import User
@@ -26,3 +27,21 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response({"message": "Telefon raqam noto'g'ri kiritildi"}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class GetUserInfo(APIView):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        return Response(
+            {
+                "id": user.id,
+                "full_name": user.full_name,
+                "phone_number": user.phone_number,
+                "type": user.type,
+                "username": user.username,
+            })
+
+
+class ChangePassword(APIView):
+    def post(self, request, *args, **kwargs):
+
