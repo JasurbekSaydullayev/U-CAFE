@@ -278,6 +278,69 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(orders, many=True)
         return Response(serializer.data)
 
+    def partial_update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = Order.objects.get(pk=self.kwargs['pk'])
+        validated_data = serializer.validated_data
+        items_data = validated_data.pop('items', None)
+        order.pay_type = validated_data.get('pay_type', order.pay_type)
+        order.status = validated_data.get('status', order.status)
+        order.order_type = validated_data.get('order_type', order.order_type)
+        order.status_pay = validated_data.get('status_pay', order.status_pay)
+        order.position = validated_data.get('position', order.position)
+        order.save()
+
+        if items_data:
+
+            for item_data in items_data:
+                food = item_data.get('food')
+                quantity = item_data.get('quantity')
+
+                existing_item = order.items.filter(food=food).first()
+
+                if existing_item:
+                    quantity_diff = quantity - existing_item.quantity
+                    if quantity_diff == 0:
+                        continue
+                    elif quantity_diff > 0:
+                        if food.count < quantity_diff:
+                            return Response(
+                                {"status": False, 'msg': f"{food.name} ovqatdan yetarli miqdor yo'q"},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                        food.count -= quantity_diff
+                    else:
+                        food.count += abs(quantity_diff)
+
+                    food.save()
+
+                    existing_item.quantity = quantity
+                    existing_item.price = food.price * quantity
+                    existing_item.save()
+                else:
+                    if food.count < quantity:
+                        return Response(
+                            {"status": False, 'msg': f"{food.name} ovqatdan yetarli miqdor yo'q"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                    food.count -= quantity
+                    food.save()
+
+                    OrderItem.objects.create(order=order, food=food, quantity=quantity,
+                                             price=food.price * quantity)
+
+            order.items.filter(quantity=0).delete()
+            if order.items.count() == 0:
+                order.delete()
+                return Response({"status": "True", 'msg': "Buyurtma bekor qilindi"}, status=status.HTTP_200_OK)
+            order.position = order.items.all().count()
+            order.full_price = order.items.aggregate(total=Sum('price'))['total']
+            order.save()
+
+        return Response(serializer.data)
+
 
 class GetHistoryOrders(APIView):
     serializer_class = OrderSerializer
