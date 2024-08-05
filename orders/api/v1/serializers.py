@@ -36,7 +36,6 @@ class OrderSerializer(serializers.ModelSerializer):
         return serializer_dry(self, validated_data)
 
 
-
 class OrderItemSerializerForDetailView(serializers.ModelSerializer):
     food = FoodSerializer(read_only=True)
     quantity = serializers.IntegerField(default=1)

@@ -279,11 +279,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def partial_update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
+        items_data = serializer.validated_data.pop('items', None)
         order = Order.objects.get(pk=self.kwargs['pk'])
         validated_data = serializer.validated_data
-        items_data = validated_data.pop('items', None)
         order.pay_type = validated_data.get('pay_type', order.pay_type)
         order.status = validated_data.get('status', order.status)
         order.order_type = validated_data.get('order_type', order.order_type)
