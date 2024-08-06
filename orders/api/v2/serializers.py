@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from ..v1.serializers import OrderPaymentsSerializer
 from ...DRY import serializer_dry
 from ...models import Order, OrderItem
 from foods.models import Food
@@ -22,10 +23,11 @@ class OrderSerializerV2(serializers.ModelSerializer):
     webhook_url = serializers.CharField(read_only=True)
     delivery_status = serializers.CharField(read_only=True)
     user = serializers.CharField(read_only=True)
+    payments = OrderPaymentsSerializer(many=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'pay_type', 'status', 'order_type', 'items', 'status_pay', 'full_price', 'webhook_url',
+        fields = ['id', 'user', 'payments', 'status', 'order_type', 'items', 'status_pay', 'full_price', 'webhook_url',
                   'delivery_status']
 
     def create(self, validated_data):

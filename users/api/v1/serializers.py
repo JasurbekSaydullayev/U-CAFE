@@ -5,10 +5,12 @@ from users.models import User
 
 class UserDashboardSerializer(serializers.ModelSerializer):
     password = serializers.CharField(min_length=8, max_length=128, write_only=True)
+    date_joined = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'phone_number', 'salary', 'full_name', 'type', 'is_active', 'password')
+        fields = (
+            'id', 'username', 'phone_number', 'salary', 'full_name', 'type', 'is_active', 'password', 'date_joined')
 
 
 class UserDetailSerializer(serializers.ModelSerializer):

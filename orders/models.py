@@ -46,7 +46,6 @@ lift_choice = (
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='orders', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    pay_type = models.CharField(max_length=50, choices=pay_type, default='cash')
     order_type = models.CharField(max_length=50, choices=order_type, default='there')
     position = models.IntegerField(default=1)
     full_price = models.PositiveBigIntegerField(default=0)
@@ -57,6 +56,18 @@ class Order(models.Model):
     delivery_address = models.CharField(max_length=255, blank=True, null=True)
     lift = models.CharField(max_length=50, choices=lift_choice, default='left')
     webhook_url = models.URLField(blank=True, null=True)
+
+    def __str__(self):
+        return str(self.id)
+
+
+class OrderPayments(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='payments')
+    pay_type = models.CharField(max_length=50, choices=pay_type, default='cash')
+    price = models.PositiveBigIntegerField(default=0)
+
+    def __str__(self):
+        return self.order
 
 
 class OrderItem(models.Model):

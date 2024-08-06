@@ -4,7 +4,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from orders.DRY import dry
-from permissions import IsAdmin
+from permissions import IsAdmin, IsManager
 from .serializers import ExpenseSerializer
 from expenses.models import Expenses
 from pagination import StandardResultsSetPagination
@@ -21,7 +21,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     queryset = Expenses.objects.all()
     serializer_class = ExpenseSerializer
     pagination_class = StandardResultsSetPagination
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [IsAuthenticated, IsManager]
 
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def list(self, request, *args, **kwargs):

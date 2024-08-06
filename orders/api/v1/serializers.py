@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from foods.api.v1.serializers import FoodSerializer
 from orders.DRY import serializer_dry
-from orders.models import Order, OrderItem
+from orders.models import Order, OrderItem, OrderPayments
 from foods.models import Food
 from decouple import config
 
@@ -20,16 +20,26 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['food_id', 'quantity']
 
 
+class OrderPaymentsSerializer(serializers.ModelSerializer):
+    pay_type = serializers.CharField()
+    price = serializers.IntegerField()
+
+    class Meta:
+        model = OrderPayments
+        fields = ['pay_type', 'price']
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
     full_price = serializers.CharField(read_only=True)
     webhook_url = serializers.CharField(read_only=True)
     delivery_status = serializers.CharField(read_only=True)
     position = serializers.CharField(read_only=True)
+    payments = OrderPaymentsSerializer(many=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'pay_type', 'status', 'order_type', 'items', 'status_pay', 'position',
+        fields = ['id', 'payments', 'status', 'order_type', 'items', 'status_pay', 'position',
                   'full_price', 'webhook_url', 'created_at', 'delivery_status']
 
     def create(self, validated_data):

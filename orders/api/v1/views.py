@@ -1,20 +1,19 @@
 from datetime import datetime
 
-import requests
-from django.core.cache import cache
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+
 from rest_framework import status, viewsets
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from django.db.models import Sum, Count, F
 
 from foods.models import Food
 from orders.DRY import dry
 from pagination import StandardResultsSetPagination
-from permissions import IsAdmin
+from permissions import IsAdmin, IsSeller, IsManager
 from .serializers import OrderSerializer, OrderDetailSerializer, SalesReportSerializer
 from orders.models import Order, OrderItem
 from expenses.models import Expenses
@@ -245,6 +244,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     http_method_names = ['get', 'post', 'put', 'patch']
     pagination_class = StandardResultsSetPagination
+    permission_classes = [IsSeller]
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -286,7 +286,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         items_data = serializer.validated_data.pop('items', None)
         order = Order.objects.get(pk=self.kwargs['pk'])
         validated_data = serializer.validated_data
-        order.pay_type = validated_data.get('pay_type', order.pay_type)
         order.status = validated_data.get('status', order.status)
         order.order_type = validated_data.get('order_type', order.order_type)
         order.status_pay = validated_data.get('status_pay', order.status_pay)
@@ -347,6 +346,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 class GetHistoryOrders(APIView):
     serializer_class = OrderSerializer
     pagination_class = StandardResultsSetPagination
+    permission_classes = [IsAuthenticated, IsManager]
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -385,6 +385,7 @@ class GetHistoryOrders(APIView):
 class SalesReportView(APIView):
     pagination_class = StandardResultsSetPagination
     serializer_class = SalesReportSerializer
+    permission_classes = [IsAuthenticated, IsAdmin]
 
     @swagger_auto_schema(
         manual_parameters=manual_parameters + [

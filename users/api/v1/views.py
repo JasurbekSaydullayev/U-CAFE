@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from pagination import StandardResultsSetPagination
+from permissions import IsManager
 from users.api.v1.serializers import UserDashboardSerializer, UserDetailSerializer, ChangePasswordSerializer
 from users.models import User
 from users.validators import check_phone_number
@@ -19,6 +20,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
     pagination_class = StandardResultsSetPagination
+    permission_classes = [IsManager]
 
     def get_serializer_class(self):
         if self.action in ['create', 'list', 'delete', 'update']:
@@ -27,7 +29,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return UserDetailSerializer
 
     def list(self, request, *args, **kwargs):
-        users = User.objects.all()
+        users = User.objects.filter(is_superuser=False).all().order_by('-date_joined')
         serializer = self.get_serializer(users, many=True)
         page = self.paginate_queryset(serializer.data)
         if page is not None:
