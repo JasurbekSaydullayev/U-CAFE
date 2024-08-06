@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from users.models import User
 
@@ -27,3 +28,16 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     class Meta:
         fields = ('old_password', 'password', 'password2')
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['full_name'] = user.full_name
+        token['username'] = user.username
+        token['user_type'] = user.type
+        token['phone_number'] = user.phone_number
+        token['salary'] = user.salary
+        token['date_joined'] = user.date_joined.isoformat()
+        return token

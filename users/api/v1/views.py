@@ -6,10 +6,12 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from pagination import StandardResultsSetPagination
 from permissions import IsManager
-from users.api.v1.serializers import UserDashboardSerializer, UserDetailSerializer, ChangePasswordSerializer
+from users.api.v1.serializers import UserDashboardSerializer, UserDetailSerializer, ChangePasswordSerializer, \
+    CustomTokenObtainPairSerializer
 from users.models import User
 from users.validators import check_phone_number
 
@@ -105,3 +107,25 @@ class ChangePassword(APIView):
                 return Response({"status": True, "message": "Пароль успешно изменен"}, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "Old password is incorrect"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.user
+
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            user_info = {
+                'full_name': user.full_name,
+                'username': user.username,
+                'user_type': user.type,
+                'phone_number': user.phone_number,
+                'salary': user.salary,
+                'date_joined': user.date_joined.isoformat(),
+            }
+            response.data['user'] = user_info
+        return response
