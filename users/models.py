@@ -5,7 +5,7 @@ user_type = (
     ('Admin', 'Admin'),
     ('Manager', 'Manager'),
     ('Cook', 'Cook'),
-    ('Cashier', 'Cashier'),
+    ('Seller', 'Seller'),
     ('Courier', 'Courier'),
     ('Barmen', 'Barmen'),
     ('Waitress', 'Waitress'),
