@@ -40,7 +40,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'payments', 'status', 'order_type', 'items', 'status_pay', 'position',
-                  'full_price', 'webhook_url', 'created_at', 'delivery_status']
+                  'full_price', 'webhook_url', 'created_at', 'delivery_status', 'discount']
 
     def create(self, validated_data):
         return serializer_dry(self, validated_data)

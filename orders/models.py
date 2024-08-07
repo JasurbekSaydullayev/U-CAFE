@@ -55,7 +55,7 @@ class Order(models.Model):
                                        blank=True)
     delivery_address = models.CharField(max_length=255, blank=True, null=True)
     lift = models.CharField(max_length=50, choices=lift_choice, default='left')
-    webhook_url = models.URLField(blank=True, null=True)
+    discount = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return str(self.id)

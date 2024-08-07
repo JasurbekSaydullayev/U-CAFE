@@ -283,25 +283,19 @@ class OrderViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-
         items_data = serializer.validated_data.pop('items', None)
         payments_data = serializer.validated_data.pop('payments', None)
         validated_data = serializer.validated_data
-
-        # Yangilanishlarni instance ga qo'llash
         instance.status = validated_data.get('status', instance.status)
         instance.order_type = validated_data.get('order_type', instance.order_type)
         instance.status_pay = validated_data.get('status_pay', instance.status_pay)
         instance.position = validated_data.get('position', instance.position)
         instance.save()
-
         if items_data:
             for item_data in items_data:
                 food = item_data.get('food')
                 quantity = item_data.get('quantity')
-
                 existing_item = instance.items.filter(food=food).first()
-
                 if existing_item:
                     quantity_diff = quantity - existing_item.quantity
                     if quantity_diff == 0:
@@ -315,9 +309,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                         food.count -= quantity_diff
                     else:
                         food.count += abs(quantity_diff)
-
                     food.save()
-
                     existing_item.quantity = quantity
                     existing_item.price = food.price * quantity
                     existing_item.save()
@@ -327,13 +319,10 @@ class OrderViewSet(viewsets.ModelViewSet):
                             {"status": False, 'msg': f"{food.name} ovqatdan yetarli miqdor yo'q"},
                             status=status.HTTP_400_BAD_REQUEST
                         )
-
                     food.count -= quantity
                     food.save()
-
                     OrderItem.objects.create(order=instance, food=food, quantity=quantity,
                                              price=food.price * quantity)
-
             instance.items.filter(quantity=0).delete()
             if instance.items.count() == 0:
                 instance.delete()
@@ -341,14 +330,15 @@ class OrderViewSet(viewsets.ModelViewSet):
             instance.position = instance.items.all().count()
             instance.full_price = instance.items.aggregate(total=Sum('price'))['total']
             instance.save()
-
         if payments_data:
+            total_payment = sum(payment['price'] for payment in payments_data)
+            if total_payment > instance.full_price:
+                return Response({"status": False, 'msg': "To'lov summasi buyurtma summasidan oshib ketmoqda."},
+                                status=status.HTTP_400_BAD_REQUEST)
             for payment_data in payments_data:
                 pay_type = payment_data.get('pay_type')
                 price = payment_data.get('price')
-
                 existing_payment = instance.payments.filter(pay_type=pay_type).first()
-
                 if existing_payment:
                     if price == 0:
                         existing_payment.delete()
@@ -359,7 +349,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                     if price == 0:
                         continue
                     OrderPayments.objects.create(order=instance, **payment_data)
-
+            instance.discount = instance.full_price - total_payment
+            instance.save()
         return Response(serializer.data)
 
 
