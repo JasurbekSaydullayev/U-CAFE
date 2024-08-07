@@ -33,15 +33,15 @@ class IncomeAPIView(APIView):
     def get(self, request, format=None):
         start_date, end_date, previous_start_date, previous_end_date = dry(request)
 
-        total_income = Order.objects.filter(
-            status='completed',
-            created_at__range=(start_date, end_date)
-        ).aggregate(total_income=Sum('full_price'))['total_income'] or 0
+        total_income = OrderPayments.objects.filter(
+            order__status='completed',
+            order__created_at__range=(start_date, end_date)
+        ).aggregate(total_income=Sum('price'))['total_income'] or 0
 
-        previous_total_income = Order.objects.filter(
-            status='completed',
-            created_at__range=(previous_start_date, previous_end_date)
-        ).aggregate(previous_total_income=Sum('full_price'))['previous_total_income'] or 0
+        previous_total_income = OrderPayments.objects.filter(
+            order__status='completed',
+            order__created_at__range=(previous_start_date, previous_end_date)
+        ).aggregate(previous_total_income=Sum('price'))['previous_total_income'] or 0
 
         if previous_total_income:
             percentage_change = ((total_income - previous_total_income) / previous_total_income) * 100
@@ -164,31 +164,32 @@ class PaymentMethodsStatsAPIView(APIView):
     def get(self, request, format=None):
         start_date, end_date, previous_start_date, previous_end_date = dry(request)
 
-        orders = Order.objects.filter(
-            status='completed',
-            created_at__range=(start_date, end_date)
+        payments = OrderPayments.objects.filter(
+            order__status='completed',
+            order__created_at__range=(start_date, end_date)
         ).values('pay_type').annotate(
             count=Count('id'),
-            total_amount=Sum('full_price')
+            total_amount=Sum('price')
         ).order_by('-total_amount')
 
-        total_orders = Order.objects.filter(
-            status='completed',
-            created_at__range=(start_date, end_date)
-        ).count()
+        total_payments = OrderPayments.objects.filter(
+            order__status='completed',
+            order__created_at__range=(start_date, end_date)
+        ).aggregate(total_count=Count('id'))['total_count'] or 0
 
-        order_dict = {order['pay_type']: order for order in orders}
+        payment_dict = {payment['pay_type']: payment for payment in payments}
+
+        pay_type_choices = dict(OrderPayments._meta.get_field('pay_type').choices)
 
         results = []
-        for pay_type_choice in Order._meta.get_field('pay_type').choices:
-            pay_type = pay_type_choice[0]
-            if pay_type in order_dict:
-                count = order_dict[pay_type]['count']
-                total_amount = order_dict[pay_type]['total_amount']
+        for pay_type, _ in pay_type_choices.items():
+            if pay_type in payment_dict:
+                count = payment_dict[pay_type]['count']
+                total_amount = payment_dict[pay_type]['total_amount']
             else:
                 count = 0
                 total_amount = 0
-            percentage = (count / total_orders) * 100 if total_orders > 0 else 0
+            percentage = (count / total_payments) * 100 if total_payments > 0 else 0
             results.append({
                 'pay_type': pay_type,
                 'count': count,
