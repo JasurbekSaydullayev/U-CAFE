@@ -26,8 +26,8 @@ class FoodViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
-            return [IsAuthenticated, IsSellerOrCook]
-        return [IsAuthenticated, IsCook]
+            return [IsAuthenticated(), IsSellerOrCook()]
+        return [IsAuthenticated(), IsCook()]
 
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter(
