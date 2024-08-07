@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from permissions import IsCook
+from permissions import IsCook, IsSeller, IsSellerOrCook
 from .serializers import FoodSerializer, FoodDetailSerializer
 from foods.models import Food
 
@@ -17,13 +17,17 @@ class FoodViewSet(viewsets.ModelViewSet):
     serializer_class = FoodSerializer
     pagination_class = StandardResultsSetPagination
     parser_classes = (MultiPartParser, FormParser)
-    permission_classes = [IsAuthenticated, IsCook]
 
     def get_serializer_class(self):
         if self.action in ['list', 'delete']:
             return FoodSerializer
         elif self.action in ['retrieve', 'partial_update', 'update', 'create']:
             return FoodDetailSerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated, IsSellerOrCook]
+        return [IsAuthenticated, IsCook]
 
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter(
