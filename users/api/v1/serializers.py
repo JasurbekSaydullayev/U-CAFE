@@ -41,3 +41,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['salary'] = user.salary
         token['date_joined'] = user.date_joined.isoformat()
         return token
+
+
+class ChangePasswordForSuperAdmin(serializers.Serializer):
+    id = serializers.IntegerField()
+    password = serializers.CharField(max_length=128, write_only=True)
+
+    class Meta:
+        fields = ('id', 'password')
+
+
+class UploadImageUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['image']

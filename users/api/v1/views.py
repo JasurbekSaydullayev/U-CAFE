@@ -3,15 +3,16 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from rest_framework import viewsets, status
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from pagination import StandardResultsSetPagination
-from permissions import IsManager
+from permissions import IsManager, IsAdmin
 from users.api.v1.serializers import UserDashboardSerializer, UserDetailSerializer, ChangePasswordSerializer, \
-    CustomTokenObtainPairSerializer
+    CustomTokenObtainPairSerializer, ChangePasswordForSuperAdmin, UploadImageUserSerializer
 from users.models import User
 from users.validators import check_phone_number
 
@@ -129,3 +130,49 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             }
             response.data['user'] = user_info
         return response
+
+
+class ChangePasswordEmployeesForSuperAdmins(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
+    serializer_class = ChangePasswordForSuperAdmin
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'password': openapi.Schema(type=openapi.TYPE_STRING),
+            },
+            required=['id', 'password'],
+        ))
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            user_id = serializer.validated_data['id']
+            password = serializer.validated_data['password']
+            user = User.objects.filter(id=user_id).first()
+            if not user:
+                return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            user.set_password(password)
+            user.save()
+            return Response({'status': "True", "message": "Successfully"}, status=status.HTTP_201_CREATED)
+
+
+class UploadPhotoUser(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    serializer_class = UploadImageUserSerializer
+
+    @swagger_auto_schema(
+        request_body=UploadImageUserSerializer,
+        manual_parameters=[
+            openapi.Parameter(
+                'image', openapi.IN_FORM, type=openapi.TYPE_FILE, description='Upload image'
+            )
+        ]
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
