@@ -19,7 +19,6 @@ def order_status_update(sender, instance, **kwargs):
                     "status": instance.status,
                     "status_pay": instance.status_pay,
                     "order_type": instance.order_type,
-                    "pay_type": instance.pay_type
                 }
             }
         )

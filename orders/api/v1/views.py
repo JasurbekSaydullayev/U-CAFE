@@ -15,7 +15,7 @@ from orders.DRY import dry
 from pagination import StandardResultsSetPagination
 from permissions import IsAdmin, IsSeller, IsManager
 from .serializers import OrderSerializer, OrderDetailSerializer, SalesReportSerializer
-from orders.models import Order, OrderItem
+from orders.models import Order, OrderItem, OrderPayments
 from expenses.models import Expenses
 
 manual_parameters = [
@@ -283,22 +283,24 @@ class OrderViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
+
         items_data = serializer.validated_data.pop('items', None)
-        order = Order.objects.get(pk=self.kwargs['pk'])
+        payments_data = serializer.validated_data.pop('payments', None)
         validated_data = serializer.validated_data
-        order.status = validated_data.get('status', order.status)
-        order.order_type = validated_data.get('order_type', order.order_type)
-        order.status_pay = validated_data.get('status_pay', order.status_pay)
-        order.position = validated_data.get('position', order.position)
-        order.save()
+
+        # Yangilanishlarni instance ga qo'llash
+        instance.status = validated_data.get('status', instance.status)
+        instance.order_type = validated_data.get('order_type', instance.order_type)
+        instance.status_pay = validated_data.get('status_pay', instance.status_pay)
+        instance.position = validated_data.get('position', instance.position)
+        instance.save()
 
         if items_data:
-
             for item_data in items_data:
                 food = item_data.get('food')
                 quantity = item_data.get('quantity')
 
-                existing_item = order.items.filter(food=food).first()
+                existing_item = instance.items.filter(food=food).first()
 
                 if existing_item:
                     quantity_diff = quantity - existing_item.quantity
@@ -329,16 +331,34 @@ class OrderViewSet(viewsets.ModelViewSet):
                     food.count -= quantity
                     food.save()
 
-                    OrderItem.objects.create(order=order, food=food, quantity=quantity,
+                    OrderItem.objects.create(order=instance, food=food, quantity=quantity,
                                              price=food.price * quantity)
 
-            order.items.filter(quantity=0).delete()
-            if order.items.count() == 0:
-                order.delete()
+            instance.items.filter(quantity=0).delete()
+            if instance.items.count() == 0:
+                instance.delete()
                 return Response({"status": "True", 'msg': "Buyurtma bekor qilindi"}, status=status.HTTP_200_OK)
-            order.position = order.items.all().count()
-            order.full_price = order.items.aggregate(total=Sum('price'))['total']
-            order.save()
+            instance.position = instance.items.all().count()
+            instance.full_price = instance.items.aggregate(total=Sum('price'))['total']
+            instance.save()
+
+        if payments_data:
+            for payment_data in payments_data:
+                pay_type = payment_data.get('pay_type')
+                price = payment_data.get('price')
+
+                existing_payment = instance.payments.filter(pay_type=pay_type).first()
+
+                if existing_payment:
+                    if price == 0:
+                        existing_payment.delete()
+                    else:
+                        existing_payment.price = price
+                        existing_payment.save()
+                else:
+                    if price == 0:
+                        continue
+                    OrderPayments.objects.create(order=instance, **payment_data)
 
         return Response(serializer.data)
 

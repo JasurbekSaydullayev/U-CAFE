@@ -3,7 +3,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from rest_framework import serializers
-from .models import Order, OrderItem
+from .models import Order, OrderItem, OrderPayments
 from .signals import order_status_update
 
 
@@ -27,6 +27,7 @@ def dry(request):
 
 def serializer_dry(self, validated_data):
     items_data = validated_data.pop('items')
+    payments_data = validated_data.pop('payments')
     for item in items_data:
         if item['food'].count < item['quantity']:
             raise serializers.ValidationError({"message": f"{item['food'].name} dan siz so'ragan miqdorda qolmagan"})
@@ -41,6 +42,12 @@ def serializer_dry(self, validated_data):
         price = food.price * quantity
         total_price += price
         OrderItem.objects.create(order=order, food=food, quantity=quantity, price=price)
+
+    for payment_data in payments_data:
+        if payment_data['price'] == 0:
+            continue
+        OrderPayments.objects.create(order=order, **payment_data)
+
     if order.order_type == "delivery":
         order.delivery_status = "waiting"
     else:
