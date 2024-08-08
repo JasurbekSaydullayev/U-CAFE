@@ -27,8 +27,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'retrieve':
-            return [IsManagerOrOwner]
-        return [IsManager]
+            return [IsManagerOrOwner()]
+        return [IsManager()]
 
     def get_serializer_class(self):
         if self.action in ['create', 'list', 'delete', 'update']:
