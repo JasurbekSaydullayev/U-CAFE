@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from permissions import IsCook, IsSeller, IsSellerOrCook
+from permissions import IsCook, IsSellerOrCook
 from .serializers import FoodSerializer, FoodDetailSerializer
 from foods.models import Food
 

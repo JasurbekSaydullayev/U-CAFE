@@ -354,7 +354,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 instance.discount = instance.full_price - total_payment
                 instance.save()
             return Response(serializer.data)
-        else:
+        elif instance.status == 'processing':
+            order_status = request.query_params.get('status', None)
+            if order_status != 'completed':
+                return Response({"message": "Ushbu buyurtma statusini faqat 'completed' ga o'zgartirish mumkin"},
+                                status=status.HTTP_400_BAD_REQUEST)
+        elif instance.status == 'completed':
             return Response({"message": "Ushbu buyurtmani o'zgartirish mumkin emas"},
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -456,3 +461,16 @@ class SalesByDayOfWeekAPIView(APIView):
             # cache.set('sales_by_day', sales_data, timeout=300)
         #
         return Response(sales_data, status=status.HTTP_200_OK)
+
+
+class CancelOrder(APIView):
+    permission_classes = [IsManager]
+
+    def post(self, request, *args, **kwargs):
+        order = Order.objects.filter(id=kwargs['pk']).first()
+        if order:
+            order.status = 'cancelled'
+            order.save()
+            return Response({"message": "Buyurtma bekor qilindi"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Buyurtma topilmadi"}, status=status.HTTP_404_NOT_FOUND)

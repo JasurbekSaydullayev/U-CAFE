@@ -23,7 +23,9 @@ class IsManager(permissions.BasePermission):
 
 class IsSeller(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.user_type == "Seller" or request.user.is_superuser
+        return (request.user.is_authenticated and
+                (request.user.user_type == "Seller" or request.user.is_superuser
+                 or request.user.user_type == 'Manager'))
 
 
 class IsCook(permissions.BasePermission):
