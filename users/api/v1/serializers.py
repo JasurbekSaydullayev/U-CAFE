@@ -14,13 +14,13 @@ class UserDashboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'id', 'username', 'phone_number', 'salary', 'full_name', 'type', 'is_active', 'password', 'date_joined')
+            'id', 'username', 'phone_number', 'salary', 'full_name', 'user_type', 'is_active', 'password', 'date_joined')
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'full_name', 'type', 'is_active', 'phone_number', 'last_login',
+        fields = ('id', 'username', 'full_name', 'user_type', 'is_active', 'phone_number', 'last_login',
                   'date_joined',)
 
 

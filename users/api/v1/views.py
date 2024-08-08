@@ -47,12 +47,12 @@ class UserViewSet(viewsets.ModelViewSet):
             properties={
                 'username': openapi.Schema(type=openapi.TYPE_STRING),
                 'password': openapi.Schema(type=openapi.TYPE_STRING),
-                'type': openapi.Schema(type=openapi.TYPE_STRING, enum=[e[0] for e in user_type]),
+                'user_type': openapi.Schema(type=openapi.TYPE_STRING, enum=[e[0] for e in user_type]),
                 'full_name': openapi.Schema(type=openapi.TYPE_STRING),
                 'phone_number': openapi.Schema(type=openapi.TYPE_STRING),
                 'salary': openapi.Schema(type=openapi.TYPE_INTEGER),
             },
-            required=['username', 'password', 'type', 'full_name', 'phone_number'],
+            required=['username', 'password', 'user_type', 'full_name', 'phone_number'],
         )
     )
     def create(self, request, *args, **kwargs):
@@ -73,7 +73,7 @@ class GetUserInfo(APIView):
                 "id": user.id,
                 "full_name": user.full_name,
                 "phone_number": user.phone_number,
-                "type": user.type,
+                "user_type": user.type,
                 "username": user.username,
                 "image": user.image.url if user.image else None
             })
