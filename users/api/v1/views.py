@@ -119,7 +119,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.user
-
+#
         response = super().post(request, *args, **kwargs)
         if response.status_code == status.HTTP_200_OK:
             user_info = {
