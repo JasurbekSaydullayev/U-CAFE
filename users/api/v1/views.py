@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from pagination import StandardResultsSetPagination
-from permissions import IsManager, IsAdmin, IsAdminOrManager
+from permissions import IsManager, IsAdmin, IsAdminOrManager, IsManagerOrOwner
 from users.api.v1.serializers import UserDashboardSerializer, UserDetailSerializer, ChangePasswordSerializer, \
     CustomTokenObtainPairSerializer, ChangePasswordForSuperAdmin, UploadImageUserSerializer, EditProfileSerializer, \
     EditProfileForSuperAdminOrManagerSerializer
@@ -24,7 +24,11 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
     pagination_class = StandardResultsSetPagination
-    permission_classes = [IsManager]
+
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return [IsManagerOrOwner]
+        return [IsManager]
 
     def get_serializer_class(self):
         if self.action in ['create', 'list', 'delete', 'update']:
@@ -119,7 +123,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.user
-#
+        #
         response = super().post(request, *args, **kwargs)
         if response.status_code == status.HTTP_200_OK:
             user_info = {

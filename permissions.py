@@ -40,3 +40,13 @@ class IsSellerOrCook(permissions.BasePermission):
 class IsAdminOrManager(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.user_type == 'Manager' or request.user.is_superuser
+
+
+class IsManagerOrOwner(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser or request.user.user_type == "Manager":
+            return True
+        return request.user == obj
