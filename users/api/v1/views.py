@@ -123,6 +123,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         response = super().post(request, *args, **kwargs)
         if response.status_code == status.HTTP_200_OK:
             user_info = {
+                "id": user.id,
                 'full_name': user.full_name,
                 'username': user.username,
                 'user_type': user.type,
@@ -183,6 +184,7 @@ class UploadPhotoUser(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class EditUserInfo(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = EditProfileSerializer
@@ -238,3 +240,15 @@ class EditUserInfoForSuperAdminOrManager(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeletePhotoUser(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        if not user.image:
+            return Response({"message": "No image was submitted."}, status=status.HTTP_400_BAD_REQUEST)
+        user.image.delete()
+        user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
