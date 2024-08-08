@@ -55,3 +55,15 @@ class UploadImageUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['image']
+
+
+class EditProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'full_name', 'phone_number']
+
+
+class EditProfileForSuperAdminOrManagerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'salary', 'is_active']

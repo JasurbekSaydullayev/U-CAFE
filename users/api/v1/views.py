@@ -10,9 +10,10 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from pagination import StandardResultsSetPagination
-from permissions import IsManager, IsAdmin
+from permissions import IsManager, IsAdmin, IsAdminOrManager
 from users.api.v1.serializers import UserDashboardSerializer, UserDetailSerializer, ChangePasswordSerializer, \
-    CustomTokenObtainPairSerializer, ChangePasswordForSuperAdmin, UploadImageUserSerializer
+    CustomTokenObtainPairSerializer, ChangePasswordForSuperAdmin, UploadImageUserSerializer, EditProfileSerializer, \
+    EditProfileForSuperAdminOrManagerSerializer
 from users.models import User
 from users.validators import check_phone_number
 
@@ -176,3 +177,60 @@ class UploadPhotoUser(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class EditUserInfo(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = EditProfileSerializer
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING),
+                'phone_number': openapi.Schema(type=openapi.TYPE_STRING),
+                'full_name': openapi.Schema(type=openapi.TYPE_STRING),
+            },
+            required=[],
+        )
+    )
+    def patch(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.serializer_class(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EditUserInfoForSuperAdminOrManager(APIView):
+    permission_classes = [IsAuthenticated, IsAdminOrManager]
+    serializer_class = EditProfileForSuperAdminOrManagerSerializer
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'salary': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'is_active': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+            },
+            required=[],
+        ),
+        responses={
+            200: openapi.Response(
+                description="User updated successfully",
+                schema=EditProfileForSuperAdminOrManagerSerializer()
+            ),
+            404: openapi.Response(description="User not found"),
+            400: openapi.Response(description="Bad request")
+        }
+    )
+    def patch(self, request, *args, **kwargs):
+        user = User.objects.filter(id=kwargs['pk']).first()
+        if not user:
+            return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
