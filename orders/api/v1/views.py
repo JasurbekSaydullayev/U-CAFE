@@ -283,6 +283,18 @@ class OrderViewSet(viewsets.ModelViewSet):
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        if instance.status != 'new':
+            status_order = serializer.validated_data.pop('status', None)
+            if not status_order:
+                return Response(
+                    {"message": "Status New bo'lmagan buyurtmalarni faqatgina statusini o'zgartirish mumkin"},
+                    status=status.HTTP_400_BAD_REQUEST)
+            if status_order == 'new':
+                instance.status = 'new'
+                instance.save()
+                return Response({"message": "Buyurtmaning faqat statusi o'zgartirildi"},
+                                status=status.HTTP_200_OK)
         serializer.is_valid(raise_exception=True)
         items_data = serializer.validated_data.pop('items', None)
         payments_data = serializer.validated_data.pop('payments', None)
