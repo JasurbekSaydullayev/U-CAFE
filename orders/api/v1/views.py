@@ -474,4 +474,3 @@ class CancelOrder(APIView):
             return Response({"message": "Buyurtma bekor qilindi"}, status=status.HTTP_200_OK)
         else:
             return Response({"message": "Buyurtma topilmadi"}, status=status.HTTP_404_NOT_FOUND)
-#
