@@ -1,6 +1,9 @@
+import magic
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from django.utils.translation import gettext_lazy as _
 from users.models import User
 
 
@@ -55,6 +58,19 @@ class UploadImageUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['image']
+
+    def validate_image(self, image):
+        max_size = 2 * 1024 * 1024
+        if image.size > max_size:
+            raise ValidationError(_("Image size should not exceed 2MB."))
+
+        valid_mime_types = ['image/png', 'image/jpeg']
+        mime_type = magic.from_buffer(image.read(1024), mime=True)
+        if mime_type not in valid_mime_types:
+            raise ValidationError(_("Unsupported file type. Only PNG and JPG files are allowed."))
+
+        image.seek(0)
+        return image
 
 
 class EditProfileSerializer(serializers.ModelSerializer):

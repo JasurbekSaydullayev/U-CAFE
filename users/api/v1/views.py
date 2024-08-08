@@ -75,6 +75,7 @@ class GetUserInfo(APIView):
                 "phone_number": user.phone_number,
                 "type": user.type,
                 "username": user.username,
+                "image": user.image.url if user.image else None
             })
 
 
@@ -173,11 +174,14 @@ class UploadPhotoUser(APIView):
         ]
     )
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
+        user = request.user
+        serializer = self.serializer_class(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            if not request.FILES.get('image'):
+                return Response({"image": ["No file was submitted."]}, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class EditUserInfo(APIView):
     permission_classes = [IsAuthenticated]
