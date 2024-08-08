@@ -465,7 +465,7 @@ class SalesByDayOfWeekAPIView(APIView):
 
 class CancelOrder(APIView):
     permission_classes = [IsManager]
-
+#
     def post(self, request, *args, **kwargs):
         order = Order.objects.filter(id=kwargs['pk']).first()
         if order:
