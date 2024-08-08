@@ -39,7 +39,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['full_name'] = user.full_name
         token['username'] = user.username
-        token['user_type'] = user.type
+        token['user_type'] = user.user_type
         token['phone_number'] = user.phone_number
         token['salary'] = user.salary
         token['date_joined'] = user.date_joined.isoformat()

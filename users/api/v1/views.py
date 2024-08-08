@@ -73,7 +73,7 @@ class GetUserInfo(APIView):
                 "id": user.id,
                 "full_name": user.full_name,
                 "phone_number": user.phone_number,
-                "user_type": user.type,
+                "user_type": user.user_type,
                 "username": user.username,
                 "image": user.image.url if user.image else None
             })
@@ -126,7 +126,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 "id": user.id,
                 'full_name': user.full_name,
                 'username': user.username,
-                'user_type': user.type,
+                'user_type': user.user_type,
                 'phone_number': user.phone_number,
                 'salary': user.salary,
                 'date_joined': user.date_joined.isoformat(),
