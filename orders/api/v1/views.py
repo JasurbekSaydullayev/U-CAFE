@@ -290,8 +290,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 return Response(
                     {"message": "Status New bo'lmagan buyurtmalarni faqatgina statusini o'zgartirish mumkin"},
                     status=status.HTTP_400_BAD_REQUEST)
-            if status_order == 'new':
-                instance.status = 'new'
+            else:
+                instance.status = status_order
                 instance.save()
                 return Response({"message": "Buyurtmaning faqat statusi o'zgartirildi"},
                                 status=status.HTTP_200_OK)
