@@ -37,12 +37,11 @@ class UserViewSet(viewsets.ModelViewSet):
             return UserDetailSerializer
 
     def list(self, request, *args, **kwargs):
-        users = User.objects.filter(is_superuser=False).all().order_by('-date_joined')
-        serializer = self.get_serializer(users, many=True)
+        queryset = User.objects.filter(is_superuser=False).all().order_by('-date_joined')
+        serializer = self.get_serializer(queryset, many=True)
         page = self.paginate_queryset(serializer.data)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            return self.get_paginated_response(page)
         return Response(serializer.data)
 
     @swagger_auto_schema(

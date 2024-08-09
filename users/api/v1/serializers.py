@@ -14,8 +14,8 @@ class UserDashboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'id', 'username', 'phone_number', 'salary', 'image', 'full_name', 'user_type', 'is_active', 'password',
-            'date_joined')
+            'id', 'username', 'phone_number', 'salary', 'full_name', 'user_type', 'is_active', 'password',
+            'date_joined', 'image',)
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
