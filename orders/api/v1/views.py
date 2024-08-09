@@ -366,7 +366,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response({"message": "Ushbu buyurtmani o'zgartirish mumkin emas"},
                             status=status.HTTP_400_BAD_REQUEST)
 
-
+#
 class GetHistoryOrders(APIView):
     serializer_class = OrderSerializer
     pagination_class = StandardResultsSetPagination
