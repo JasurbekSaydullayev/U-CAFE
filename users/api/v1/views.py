@@ -22,7 +22,7 @@ from ...models import user_type
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+    http_method_names = ['get', 'post']
     pagination_class = StandardResultsSetPagination
 
     def get_permissions(self):
@@ -241,7 +241,13 @@ class EditUserInfoForSuperAdminOrManager(APIView):
             return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(user, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            is_active = serializer.validated_data.get('is_active', None)
+            salary = serializer.validated_data.get('salary', None)
+            if is_active is not None:
+                user.is_active = is_active
+            if salary:
+                user.salary = salary
+            user.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
