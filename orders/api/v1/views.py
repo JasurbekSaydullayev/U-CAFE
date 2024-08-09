@@ -367,6 +367,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
+#########
 class GetHistoryOrders(APIView):
     serializer_class = OrderSerializer
     pagination_class = StandardResultsSetPagination
