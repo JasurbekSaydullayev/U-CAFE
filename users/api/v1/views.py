@@ -134,6 +134,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 'phone_number': user.phone_number,
                 'salary': user.salary,
                 'date_joined': user.date_joined.isoformat(),
+                'image': user.image.url
             }
             response.data['user'] = user_info
         return response
