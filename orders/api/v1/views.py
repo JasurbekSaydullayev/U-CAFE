@@ -361,13 +361,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                                 status=status.HTTP_400_BAD_REQUEST)
             instance.status = order_status
             instance.save()
-            return Response({"message": "Ok"}, status=status.HTTP_200_OK)
+            return Response({"message": "Status completedga o'zgartirildi"}, status=status.HTTP_200_OK)
         elif instance.status == 'completed':
             return Response({"message": "Ushbu buyurtmani o'zgartirish mumkin emas"},
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-#########
 class GetHistoryOrders(APIView):
     serializer_class = OrderSerializer
     pagination_class = StandardResultsSetPagination
