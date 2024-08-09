@@ -35,6 +35,7 @@ class OrderSerializer(serializers.ModelSerializer):
     webhook_url = serializers.CharField(read_only=True)
     delivery_status = serializers.CharField(read_only=True)
     position = serializers.CharField(read_only=True)
+    discount = serializers.IntegerField(read_only=True)
     payments = OrderPaymentsSerializer(many=True)
 
     class Meta:
