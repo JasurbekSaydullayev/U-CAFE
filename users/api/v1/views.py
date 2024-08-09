@@ -256,7 +256,7 @@ class EditUserInfoForSuperAdminOrManager(APIView):
 class DeletePhotoUser(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         user = request.user
         if not user.image:
             return Response({"message": "No image was submitted."}, status=status.HTTP_400_BAD_REQUEST)
