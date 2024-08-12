@@ -511,3 +511,22 @@ class CancelOrder(APIView):
             return Response({"message": "Buyurtma bekor qilindi"}, status=status.HTTP_200_OK)
         else:
             return Response({"message": "Buyurtma topilmadi"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class GetCancelledOrders(APIView):
+    permission_classes = [IsManager]
+    serializer_class = OrderSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get(self, request, *args, **kwargs):
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
+        orders = Order.objects.filter(status='cancelled', created_at__range=(start_date, end_date)).all().order_by(
+            '-created_at')
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(orders, request)
+        if page is not None:
+            serializer = self.serializer_class(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        else:
+            serializer = self.serializer_class(orders, many=True)
+            return Response(serializer.data)
