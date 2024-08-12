@@ -75,7 +75,12 @@ class GetDiscountOrders(APIView):
     permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = OrderDetailSerializer
 
-    @swagger_auto_schema(manual_parameters=manual_parameters)
+    @swagger_auto_schema(
+        manual_parameters=manual_parameters + [
+            openapi.Parameter('page', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
+                              description='Page number'),
+            openapi.Parameter('page_size', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
+                              description='Number of results per page'), ])
     def get(self, request, format=None):
         start_date, end_date, previous_start_date, previous_end_date = dry(request)
         discount_orders = Order.objects.filter(discount__gt=0, created_at__range=(start_date, end_date)).order_by(
@@ -518,9 +523,16 @@ class GetCancelledOrders(APIView):
     serializer_class = OrderSerializer
     pagination_class = StandardResultsSetPagination
 
+    @swagger_auto_schema(
+        manual_parameters=manual_parameters + [
+            openapi.Parameter('page', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
+                              description='Page number'),
+            openapi.Parameter('page_size', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
+                              description='Number of results per page'), ])
     def get(self, request, *args, **kwargs):
         start_date, end_date, previous_start_date, previous_end_date = dry(request)
-        orders = Order.objects.filter(status='cancelled', created_at__range=(start_date, end_date)).all().order_by(
+        orders = Order.objects.filter(status='cancelled',
+                                      created_at__range=(start_date, end_date)).all().order_by(
             '-created_at')
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(orders, request)
