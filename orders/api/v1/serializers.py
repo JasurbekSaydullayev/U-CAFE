@@ -31,7 +31,7 @@ class OrderPaymentsSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
-    full_price = serializers.IntegerField(read_only=True)
+    full_price = serializers.CharField(read_only=True)
     webhook_url = serializers.CharField(read_only=True)
     delivery_status = serializers.CharField(read_only=True)
     position = serializers.CharField(read_only=True)
