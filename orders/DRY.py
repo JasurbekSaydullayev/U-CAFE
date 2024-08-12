@@ -64,7 +64,11 @@ def serializer_dry(self, validated_data):
     order.status = 'new'
     order.full_price = total_price
     order.position = len(items_data)
-    order.discount = total_price - total_payment
+    if len(payments_data) == 0:
+        order.discount = 0
+        order.status_pay = 'unpaid'
+    else:
+        order.discount = total_price - total_payment
 
     post_save.connect(receiver=order_status_update, sender=Order)
     order.save()

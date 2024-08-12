@@ -74,7 +74,7 @@ class IncomeAPIView(APIView):
 class GetDiscountOrders(APIView):
     permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = OrderDetailSerializer
-#
+
     @swagger_auto_schema(manual_parameters=manual_parameters)
     def get(self, request, format=None):
         start_date, end_date, previous_start_date, previous_end_date = dry(request)
