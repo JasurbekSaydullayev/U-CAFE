@@ -315,6 +315,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         if instance.status == 'new':
+            if instance.status_pay == 'unpaid' and serializer.validated_data['status_pay'] == 'unpaid':
+                return Response({"message": "Iltimos avval to'lovni amalga oshiring"},
+                                status=status.HTTP_400_BAD_REQUEST)
             items_data = serializer.validated_data.pop('items', None)
             payments_data = serializer.validated_data.pop('payments', None)
             validated_data = serializer.validated_data
