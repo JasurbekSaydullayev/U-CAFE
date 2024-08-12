@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     IncomeAPIView, ExpensesAPIView, SalesAPIView, OrdersAPIView,
     PaymentMethodsStatsAPIView, PopularCategoriesStatsAPIView, OrderViewSet, GetHistoryOrders, SalesReportView,
-    SalesByDayOfWeekAPIView, CancelOrder
+    SalesByDayOfWeekAPIView, CancelOrder, GetDiscountOrders
 )
 
 router = DefaultRouter()
@@ -20,6 +20,7 @@ urlpatterns = [
     path('statistics/sales-foods/', SalesReportView.as_view(), name='sales-foods'),
     path('statistics/sales-by-day-week/', SalesByDayOfWeekAPIView.as_view(), name='sales-by-day-week'),
     path('cancel-order/<int:pk>/', CancelOrder.as_view(), name='cancel-order'),
+    path('discount-order/', GetDiscountOrders.as_view(), name='discount-order'),
 
 ]
 

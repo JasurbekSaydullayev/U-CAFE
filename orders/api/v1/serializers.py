@@ -58,6 +58,7 @@ class OrderItemSerializerForDetailView(serializers.ModelSerializer):
 
 class OrderDetailSerializer(serializers.ModelSerializer):
     items = OrderItemSerializerForDetailView(many=True)
+    payments = OrderPaymentsSerializer(many=True)
 
     class Meta:
         model = Order

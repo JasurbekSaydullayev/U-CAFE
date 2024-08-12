@@ -38,20 +38,50 @@ class IncomeAPIView(APIView):
             order__created_at__range=(start_date, end_date)
         ).aggregate(total_income=Sum('price'))['total_income'] or 0
 
+        total_trade = Order.objects.filter(
+            status='completed',
+            created_at__range=(start_date, end_date)
+        ).aggregate(total_trade=Sum('full_price'))['total_trade'] or 0
+
+        previous_total_trade = Order.objects.filter(
+            status='completed',
+            created_at__range=(previous_start_date, previous_end_date)
+        ).aggregate(previous_total_trade=Sum('full_price'))['previous_total_trade'] or 0
+
         previous_total_income = OrderPayments.objects.filter(
             order__status='completed',
             order__created_at__range=(previous_start_date, previous_end_date)
         ).aggregate(previous_total_income=Sum('price'))['previous_total_income'] or 0
 
-        if previous_total_income:
-            percentage_change = ((total_income - previous_total_income) / previous_total_income) * 100
+        if previous_total_trade:
+            percentage_change_trade = ((total_trade - previous_total_trade) / previous_total_trade) * 100
         else:
-            percentage_change = None
+            percentage_change_trade = None
+
+        if previous_total_income:
+            percentage_change_income = ((total_income - previous_total_income) / previous_total_income) * 100
+        else:
+            percentage_change_income = None
 
         return Response({
             'total_income': total_income,
-            'percentage_change': percentage_change
+            'percentage_change_income': percentage_change_income,
+            'total_trade': total_trade,
+            'percentage_change_trade': percentage_change_trade,
         }, status=status.HTTP_200_OK)
+
+
+class GetDiscountOrders(APIView):
+    permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = OrderDetailSerializer
+
+    @swagger_auto_schema(manual_parameters=manual_parameters)
+    def get(self, request, format=None):
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
+        discount_orders = Order.objects.filter(discount__gt=0, created_at__range=(start_date, end_date)).order_by(
+            'created_at')
+        serializer = self.serializer_class(discount_orders, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ExpensesAPIView(APIView):
