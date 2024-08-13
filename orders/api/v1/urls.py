@@ -24,7 +24,7 @@ urlpatterns = [
     path('cancel-order/<int:pk>/', CancelOrder.as_view(), name='cancel-order'),
     path('discount-order/', GetDiscountOrders.as_view(), name='discount-order'),
     path('get-cancelled-orders/', GetCancelledOrders.as_view(), name='cancelled-orders'),
-    path('excel/', GetExcel.as_view(), name='cancelled-orders'),
+    path('excel/', GetExcel.as_view(), name='excel'),
 
 ]
 

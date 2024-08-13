@@ -71,3 +71,7 @@ class SalesReportSerializer(serializers.Serializer):
     total_quantity = serializers.IntegerField()
     price_per_unit = serializers.IntegerField(source='food__price')
     total_sales = serializers.IntegerField()
+
+
+class FileUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
