@@ -1,61 +1,128 @@
 import pandas as pd
 from django.http import HttpResponse
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-
-from permissions import IsAdmin, IsManager
+from openpyxl.styles import Alignment
+from permissions import IsManager
 from .views import (
     IncomeAPIView, GetDiscountOrders, ExpensesAPIView, SalesAPIView,
     PaymentMethodsStatsAPIView, PopularCategoriesStatsAPIView,
     GetHistoryOrders, SalesReportView, SalesByDayOfWeekAPIView, GetCancelledOrders
 )
+from ...DRY import dry
+from ...models import Order
+
 
 def get_data(view_class, request):
     view_instance = view_class()
     view_response = view_instance.dispatch(request._request)
     return view_response.data
 
+
 class GetExcel(APIView):
     permission_classes = (IsAuthenticated, IsManager)
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                format='date',
+                description='Start date in YYYY-MM-DD format'
+            ),
+            openapi.Parameter(
+                'end_date',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                format='date',
+                description='End date in YYYY-MM-DD format'
+            ),
+        ]
+    )
     def get(self, request, *args, **kwargs):
-
+        start_date, end_date, previous_start_date, previous_end_date = dry(request)
         data1 = get_data(IncomeAPIView, request)
-        data2 = get_data(GetDiscountOrders, request)
+        data2 = Order.objects.filter(discount__gt=0, created_at__range=(start_date, end_date)).order_by('-created_at')
         data3 = get_data(ExpensesAPIView, request)
         data4 = get_data(SalesAPIView, request)
         data5 = get_data(PaymentMethodsStatsAPIView, request)
         data6 = get_data(GetHistoryOrders, request)
-        data7 = get_data(SalesReportView, request)
-        data8 = get_data(SalesByDayOfWeekAPIView, request)
-        data9 = get_data(GetCancelledOrders, request)
+        data9 = Order.objects.filter(status='cancelled',
+                                     created_at__range=(start_date, end_date)).all().order_by(
+            '-created_at')
         data10 = get_data(PopularCategoriesStatsAPIView, request)
 
-        # Har bir ma'lumotni DataFrame'ga o'girib, indeks ko'rsatish
+        # Process and prepare data
+        data6.pop('next', None)
+        data6.pop('previous', None)
+        data6.pop('count', None)
+        data6 = data6.get('results', [])
+
+        if isinstance(data6, list):
+            for entry in data6:
+                entry.pop('payments', None)
+                entry.pop('items', None)
+
+        # Convert data to DataFrames
         df1 = pd.DataFrame([data1]) if isinstance(data1, dict) else pd.DataFrame(data1)
-        df2 = pd.DataFrame([data2]) if isinstance(data2, dict) else pd.DataFrame(data2)
+        df2 = pd.DataFrame(list(data2.values(
+            'user', 'order_type', 'position', 'full_price', 'status_pay', 'status', 'discount', 'created_at'
+        )))
         df3 = pd.DataFrame([data3]) if isinstance(data3, dict) else pd.DataFrame(data3)
         df4 = pd.DataFrame([data4]) if isinstance(data4, dict) else pd.DataFrame(data4)
         df5 = pd.DataFrame([data5]) if isinstance(data5, dict) else pd.DataFrame(data5)
         df6 = pd.DataFrame([data6]) if isinstance(data6, dict) else pd.DataFrame(data6)
-        df7 = pd.DataFrame([data7]) if isinstance(data7, dict) else pd.DataFrame(data7)
-        df8 = pd.DataFrame([data8]) if isinstance(data8, dict) else pd.DataFrame(data8)
         df9 = pd.DataFrame([data9]) if isinstance(data9, dict) else pd.DataFrame(data9)
         df10 = pd.DataFrame([data10]) if isinstance(data10, dict) else pd.DataFrame(data10)
 
+        # Ensure datetime columns are timezone-naive
+        if 'created_at' in df2.columns:
+            df2['created_at'] = df2['created_at'].apply(lambda x: x.replace(tzinfo=None) if pd.notnull(x) else x)
+
+        df1.rename(columns={
+            'total_income': 'Общий доход',
+            'percentage_change_income': 'Прибыль в процентах по сравнению с предыдущим периодом',
+            'total_trade': 'Общий объем продаж',
+            'percentage_change_trade': 'Продажи указаны в процентах по сравнению с предыдущим периодом.'
+        }, inplace=True)
+        df3.rename(columns={
+            'total_expenses': 'Общая стоимость расходов',
+            'percentage_change': 'Стоимость расхода указана в процентах к предыдущему периоду'
+        })
+        df4.rename(columns={
+            'total_sales': 'Общее количество продаж',
+        })
+
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename=combined_statistics.xlsx'
+        response['Content-Disposition'] = f'attachment; filename=Отчёт ({start_date} - {end_date}).xlsx'
 
         with pd.ExcelWriter(response, engine='openpyxl') as writer:
-            df1.to_excel(writer, sheet_name='Income', index=False)
-            df2.to_excel(writer, sheet_name='DiscountOrders', index=False)
-            df3.to_excel(writer, sheet_name='Expenses', index=False)
-            df4.to_excel(writer, sheet_name='Sales', index=False)
-            df5.to_excel(writer, sheet_name='PaymentMethods', index=False)
-            df6.to_excel(writer, sheet_name='OrderHistory', index=False)
-            df7.to_excel(writer, sheet_name='SalesReport', index=False)
-            df8.to_excel(writer, sheet_name='SalesByDayOfWeek', index=False)
-            df9.to_excel(writer, sheet_name='CancelOrders', index=False)
-            df10.to_excel(writer, sheet_name='PopularCategories', index=False)
+            df1.to_excel(writer, sheet_name='Статистика', index=False)
+            df2.to_excel(writer, sheet_name='Заказы со скидкой', index=False)
+            df3.to_excel(writer, sheet_name='Расходы', index=False)
+            df4.to_excel(writer, sheet_name='Продажи', index=False)
+            df5.to_excel(writer, sheet_name='Способы оплаты', index=False)
+            df6.to_excel(writer, sheet_name='История заказов', index=False)
+            df9.to_excel(writer, sheet_name='Отмененные заказы', index=False)
+            df10.to_excel(writer, sheet_name='Популярные категории по товаров', index=False)
+
+            for sheet_name in writer.sheets:
+                worksheet = writer.sheets[sheet_name]
+                for column in worksheet.columns:
+                    max_length = 0
+                    column_name = column[0].column_letter
+                    for cell in column:
+                        try:
+                            cell.alignment = Alignment(horizontal='center', vertical='center')
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except Exception as e:
+                            print(f"Error processing cell: {e}")
+                            pass
+                    adjusted_width = (max_length + 5)
+                    worksheet.column_dimensions[column_name].width = adjusted_width
 
         return response
