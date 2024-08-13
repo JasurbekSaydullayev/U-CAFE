@@ -62,7 +62,7 @@ class GetExcel(APIView):
         data4 = get_data(SalesAPIView, request)
         data5 = get_data(PaymentMethodsStatsAPIView, request)
         data6 = get_data(GetHistoryOrders, request)
-        data9 = Order.objects.filter(status='Cancelled',
+        data9 = Order.objects.filter(status='cancelled',
                                      created_at__range=(start_date, end_date)).all().order_by(
             '-created_at')
         data10 = get_data(PopularCategoriesStatsAPIView, request)
