@@ -1,5 +1,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
+
+from .excel_api import GetExcel
 from .views import (
     IncomeAPIView, ExpensesAPIView, SalesAPIView, OrdersAPIView,
     PaymentMethodsStatsAPIView, PopularCategoriesStatsAPIView, OrderViewSet, GetHistoryOrders, SalesReportView,
@@ -22,6 +24,7 @@ urlpatterns = [
     path('cancel-order/<int:pk>/', CancelOrder.as_view(), name='cancel-order'),
     path('discount-order/', GetDiscountOrders.as_view(), name='discount-order'),
     path('get-cancelled-orders/', GetCancelledOrders.as_view(), name='cancelled-orders'),
+    path('excel/', GetExcel.as_view(), name='cancelled-orders'),
 
 ]
 
