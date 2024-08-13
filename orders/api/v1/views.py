@@ -533,7 +533,7 @@ class GetCancelledOrders(APIView):
         start_date, end_date, previous_start_date, previous_end_date = dry(request)
         orders = Order.objects.filter(status='cancelled',
                                       created_at__range=(start_date, end_date)).all().order_by(
-            '-created_at') #
+            '-created_at')
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(orders, request)
         serializer = self.serializer_class(page, many=True)
