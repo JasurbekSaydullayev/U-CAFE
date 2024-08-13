@@ -57,5 +57,5 @@ class GetExcel(APIView):
             df8.to_excel(writer, sheet_name='SalesByDayOfWeek', index=False)
             df9.to_excel(writer, sheet_name='CancelOrders', index=False)
             df10.to_excel(writer, sheet_name='PopularCategories', index=False)
-#
+
         return response
