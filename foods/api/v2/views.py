@@ -2,7 +2,7 @@
 # from rest_framework import viewsets
 # from rest_framework.permissions import AllowAny
 #
-# from pagination import StandardResultsSetPagination
+from pagination import StandardResultsSetPagination
 # from .serializers import FoodSerializerV2, FoodDetailSerializerV2
 # from ...models import Food
 #

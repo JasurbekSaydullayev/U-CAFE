@@ -35,7 +35,6 @@ class JsonTokenAuthMiddleware:
         token = query_string.get("token", [None])[0]
         if token:
             try:
-                # Tokenni dekodlash
                 payload = jwt.decode(token, api_settings.SIGNING_KEY, algorithms=[api_settings.ALGORITHM])
                 user_id = payload.get("user_id")
                 if user_id:

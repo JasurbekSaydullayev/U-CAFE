@@ -8,13 +8,11 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ucafe.settings')
 
 django.setup()
 
-django_asgi_app = get_asgi_application()
-
 from orders import routing
-from orders.middleware import JsonTokenAuthMiddlewareStack  # Убедитесь, что путь правильный
+from orders.middleware import JsonTokenAuthMiddlewareStack
 
 application = ProtocolTypeRouter({
-    "http": django_asgi_app,
+    "http": get_asgi_application(),
     "websocket": JsonTokenAuthMiddlewareStack(
         AuthMiddlewareStack(
             URLRouter(
